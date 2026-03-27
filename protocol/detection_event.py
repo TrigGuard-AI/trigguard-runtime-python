@@ -31,6 +31,9 @@ class DetectionType(str, Enum):
     PII_EXPOSURE = "pii_exposure"
     TOXICITY = "toxicity"
     POLICY_VIOLATION = "policy_violation"
+    TOOL_ABUSE = "tool_abuse"
+    CONVERSATION_MANIPULATION = "conversation_manipulation"
+    ROLE_ESCALATION = "role_escalation"
 
 
 class Decision(str, Enum):
@@ -51,6 +54,74 @@ class DetectionRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
     request_id: UUID = field(default_factory=uuid4)
     timestamp: datetime = field(default_factory=datetime.utcnow)
+    # Optional conversation context (for multi-turn detection)
+    system_prompt: Optional[str] = None
+    conversation_history: list[dict[str, str]] = field(default_factory=list)
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
+class Message:
+    """A single message in conversation history."""
+    role: str  # "user", "assistant", "system", "tool"
+    content: str
+    timestamp: Optional[datetime] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ToolCall:
+    """A tool invocation record."""
+    tool_name: str
+    arguments: dict[str, Any] = field(default_factory=dict)
+    result: Optional[str] = None
+    timestamp: Optional[datetime] = None
+    success: bool = True
+
+
+@dataclass
+class DetectionContext:
+    """
+    Rich context for conversation-aware detection.
+    
+    Assembled by ContextBuilder before detectors run.
+    Detectors analyze this context, not raw request text.
+    """
+    request_id: UUID
+    current_prompt: str
+    system_prompt: Optional[str] = None
+    conversation_history: list[Message] = field(default_factory=list)
+    tool_calls: list[ToolCall] = field(default_factory=list)
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+
+    @property
+    def turn_count(self) -> int:
+        """Number of conversation turns."""
+        return len(self.conversation_history)
+
+    @property
+    def has_tool_calls(self) -> bool:
+        """Whether any tool calls were made."""
+        return len(self.tool_calls) > 0
+
+    @property
+    def full_conversation_text(self) -> str:
+        """Concatenate all messages for pattern matching."""
+        parts = []
+        if self.system_prompt:
+            parts.append(f"[SYSTEM] {self.system_prompt}")
+        for msg in self.conversation_history:
+            parts.append(f"[{msg.role.upper()}] {msg.content}")
+        parts.append(f"[USER] {self.current_prompt}")
+        return "\n".join(parts)
+
+    @property
+    def recent_messages(self) -> list[Message]:
+        """Get last 5 messages for focused analysis."""
+        return self.conversation_history[-5:]
 
 
 @dataclass
