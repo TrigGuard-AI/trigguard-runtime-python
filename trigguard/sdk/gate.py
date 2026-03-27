@@ -95,6 +95,44 @@ SURFACE_ALIASES = {
 }
 
 
+def discover_surface(surface_or_alias: str) -> Optional[str]:
+    """
+    Discover and normalize a surface to its canonical ID.
+
+    Uses the global surface registry for alias resolution.
+
+    Args:
+        surface_or_alias: Surface name, alias, or ID
+
+    Returns:
+        Canonical surface ID or None if not found
+    """
+    from trigguard.registry.surface_registry import get_global_surface_registry
+
+    registry = get_global_surface_registry()
+    surface_def = registry.resolve(surface_or_alias)
+    if surface_def:
+        return surface_def.surface_id
+    return None
+
+
+def get_surface_risk_tier(surface_or_alias: str) -> Optional[str]:
+    """
+    Get the risk tier for a surface.
+
+    Args:
+        surface_or_alias: Surface name, alias, or ID
+
+    Returns:
+        Risk tier string ("low", "medium", "high", "irreversible") or None
+    """
+    from trigguard.registry.surface_registry import get_global_surface_registry
+
+    registry = get_global_surface_registry()
+    tier = registry.get_risk_tier(surface_or_alias)
+    return tier.value if tier else None
+
+
 @dataclass
 class ExecutionRequest:
     """

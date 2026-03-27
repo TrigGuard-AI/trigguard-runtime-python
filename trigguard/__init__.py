@@ -34,6 +34,14 @@ from trigguard.core.execution_adapter import (
 from trigguard.protocol.decision_contracts import ExecutionSurface, Decision
 from trigguard.grants.verifier import ActionGrantVerifier
 from trigguard.verification.verifier_sdk import TrigGuardVerifierSDK
+from trigguard.registry.surface_registry import (
+    ExecutionSurfaceRegistry,
+    get_global_surface_registry,
+)
+from trigguard.registry.surface_types import (
+    SurfaceRiskTier,
+    ExecutionSurfaceDefinition,
+)
 
 __version__ = "0.1.0"
 
@@ -48,6 +56,11 @@ __all__ = [
     # Verification SDK
     "ActionGrantVerifier",
     "TrigGuardVerifierSDK",
+    # Surface Registry
+    "ExecutionSurfaceRegistry",
+    "get_global_surface_registry",
+    "SurfaceRiskTier",
+    "ExecutionSurfaceDefinition",
     # Exceptions
     "ExecutionDenied",
     "FailClosedError",
