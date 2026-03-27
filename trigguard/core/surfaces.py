@@ -149,6 +149,79 @@ def parse_surface(surface_str: str) -> ExecutionSurface:
     raise ValueError(f"Unknown surface: {surface_str}")
 
 
+# ============================================================
+# REGISTRY INTEGRATION
+# ============================================================
+
+
+def normalize_surface(surface: str) -> str:
+    """
+    Normalize a surface name to canonical ID.
+
+    Uses the global surface registry for alias resolution.
+    Unknown surfaces are prefixed with 'unknown.' namespace.
+
+    Args:
+        surface: Surface name, alias, or ID
+
+    Returns:
+        Canonical surface ID (e.g., "trigguard.spend.transfer")
+    """
+    # Lazy import to avoid circular dependency
+    from trigguard.registry.surface_registry import get_global_surface_registry
+
+    registry = get_global_surface_registry()
+    return registry.normalize(surface)
+
+
+def is_registered_surface(surface: str) -> bool:
+    """
+    Check if a surface is registered in the global registry.
+
+    Args:
+        surface: Surface name, alias, or ID
+
+    Returns:
+        True if surface is registered
+    """
+    from trigguard.registry.surface_registry import get_global_surface_registry
+
+    registry = get_global_surface_registry()
+    return registry.is_registered(surface)
+
+
+def get_surface_definition(surface: str):
+    """
+    Get surface definition from the global registry.
+
+    Args:
+        surface: Surface name, alias, or ID
+
+    Returns:
+        ExecutionSurfaceDefinition or None
+    """
+    from trigguard.registry.surface_registry import get_global_surface_registry
+
+    registry = get_global_surface_registry()
+    return registry.resolve(surface)
+
+
+def surface_requires_grant(surface: str) -> bool:
+    """
+    Check if a surface requires a signed Action Grant.
+
+    Args:
+        surface: Surface name, alias, or ID
+
+    Returns:
+        True if grant required (defaults to True for unknown surfaces)
+    """
+    from trigguard.registry.surface_registry import get_global_surface_registry
+
+    registry = get_global_surface_registry()
+    return registry.requires_grant(surface)
+
+
 __all__ = [
     # Surface constants
     "SPEND",
@@ -167,4 +240,9 @@ __all__ = [
     "get_risk_tier",
     "requires_strict_evaluation",
     "parse_surface",
+    # Registry integration
+    "normalize_surface",
+    "is_registered_surface",
+    "get_surface_definition",
+    "surface_requires_grant",
 ]

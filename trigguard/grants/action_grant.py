@@ -210,6 +210,34 @@ class ActionGrant:
             expires = expires.replace(tzinfo=timezone.utc)
         return max(0, (expires - now).total_seconds())
 
+    @property
+    def surface_id(self) -> str:
+        """
+        Get canonical surface ID.
+
+        Normalizes the surface field to a canonical registry ID.
+        If the surface is not registered, returns it with 'unknown.' prefix.
+
+        Returns:
+            Canonical surface ID (e.g., "trigguard.spend.transfer")
+        """
+        # Lazy import to avoid circular dependency
+        from trigguard.core.surfaces import normalize_surface
+
+        return normalize_surface(self.surface)
+
+    @property
+    def is_registered_surface(self) -> bool:
+        """
+        Check if this grant's surface is registered.
+
+        Returns:
+            True if surface is in the global registry
+        """
+        from trigguard.core.surfaces import is_registered_surface
+
+        return is_registered_surface(self.surface)
+
     def __str__(self) -> str:
         return (
             f"ActionGrant(id={self.grant_id}, "
