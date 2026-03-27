@@ -288,7 +288,7 @@ class TestGlobalCache:
     def test_get_cache_singleton(self):
         """Test get_cache returns singleton."""
         # Reset global cache
-        import cache.decision_cache as module
+        import trigguard.cache.decision_cache as module
 
         module._cache = None
 
@@ -312,7 +312,7 @@ class TestCachedEvaluate:
     async def test_cached_evaluate_miss(self):
         """Test cached_evaluate on cache miss."""
         # Reset cache
-        import cache.decision_cache as module
+        import trigguard.cache.decision_cache as module
 
         module._cache = None
 
@@ -329,7 +329,7 @@ class TestCachedEvaluate:
     @pytest.mark.asyncio
     async def test_cached_evaluate_hit(self):
         """Test cached_evaluate on cache hit."""
-        import cache.decision_cache as module
+        import trigguard.cache.decision_cache as module
 
         module._cache = None
 
@@ -347,7 +347,7 @@ class TestCachedEvaluate:
 
     def test_cached_evaluate_sync(self):
         """Test synchronous cached evaluation."""
-        import cache.decision_cache as module
+        import trigguard.cache.decision_cache as module
 
         module._cache = None
 

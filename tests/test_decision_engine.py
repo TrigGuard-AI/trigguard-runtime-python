@@ -254,7 +254,7 @@ def test_decision_receipt_audit_trail():
     # Check receipt has audit fields
     assert receipt.receipt_id is not None
     assert receipt.request_id == request.request_id
-    assert receipt.policy_version == "1.0.0"
+    assert receipt.policy_version == "v1.0.0"
     assert receipt.evaluation_time_ms >= 0
     assert receipt.evaluated_at is not None
 

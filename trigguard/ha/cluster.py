@@ -31,7 +31,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Set
+from typing import Any, Dict, List, Optional, Callable, Set, Tuple
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
@@ -189,9 +189,6 @@ class CacheHealthCheck(HealthCheck):
             return True, {"hit_rate": stats.hit_rate, "size": stats.size}
         except Exception as e:
             return False, {"error": str(e)}
-
-
-from typing import Tuple  # Add missing import
 
 
 class HealthChecker:

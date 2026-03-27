@@ -328,7 +328,7 @@ class TestTenantAwareEvaluator:
         assert result["permit"] is True
 
     def test_evaluate_with_tenant_context(self):
-        """Test evaluation with tenant from context."""
+        """Test evaluation with tenant from trigguard.context."""
         manager = TenantPolicyManager()
         manager.register_tenant("test-tenant")
 
@@ -397,7 +397,7 @@ class TestGlobalManager:
     def test_get_tenant_manager_singleton(self):
         """Test global manager is singleton."""
         # Reset
-        import policy.multi_tenant as module
+        import trigguard.policy.multi_tenant as module
 
         module._manager = None
 
@@ -408,7 +408,7 @@ class TestGlobalManager:
 
     def test_register_tenant_global(self):
         """Test global tenant registration."""
-        import policy.multi_tenant as module
+        import trigguard.policy.multi_tenant as module
 
         module._manager = None
 

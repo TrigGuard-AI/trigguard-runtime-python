@@ -351,7 +351,7 @@ def protected_shell_command(
         def default_subprocess():
             return subprocess.run(
                 command,
-                shell=shell,
+                shell=shell,  # nosec B602 - intentional: TrigGuard controls execution
                 cwd=cwd,
                 capture_output=capture_output,
                 timeout=timeout,

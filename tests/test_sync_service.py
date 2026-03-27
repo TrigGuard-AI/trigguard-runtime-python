@@ -409,7 +409,7 @@ class TestGlobalService:
 
     def test_configure_sync_service(self):
         """Test configuring global service."""
-        import policy.sync_service as module
+        import trigguard.policy.sync_service as module
 
         module._sync_service = None
 
@@ -424,7 +424,7 @@ class TestGlobalService:
 
     def test_get_sync_service(self):
         """Test getting configured service."""
-        import policy.sync_service as module
+        import trigguard.policy.sync_service as module
 
         module._sync_service = None
 

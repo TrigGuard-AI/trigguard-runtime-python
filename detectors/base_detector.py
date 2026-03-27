@@ -8,7 +8,11 @@ This ensures consistent interface across all detection modules.
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
-from protocol.detection_event import Detection, DetectionContext, DetectionRequest
+from trigguard.protocol.detection_event import (
+    Detection,
+    DetectionContext,
+    DetectionRequest,
+)
 
 
 class BaseDetector(ABC):

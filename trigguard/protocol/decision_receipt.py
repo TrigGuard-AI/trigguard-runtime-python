@@ -188,3 +188,7 @@ def receipt_from_dict(data: dict[str, Any]) -> DecisionReceipt:
         violations_summary=data.get("violations_summary", []),
         metadata=data.get("metadata", {}),
     )
+
+
+# Alias for backward compatibility
+create_receipt = generate_receipt

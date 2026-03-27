@@ -1,19 +1,114 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/user/application_security/sast/#available-cicd-variables
-# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure/
-# Dependency Scanning customization: https://docs.gitlab.com/user/application_security/dependency_scanning/#customizing-analyzer-behavior
-# Container Scanning customization: https://docs.gitlab.com/user/application_security/container_scanning/#customizing-analyzer-behavior
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ci/variables/#cicd-variable-precedence
+# TrigGuard Kernel CI Pipeline
+# Enforces: lint, tests, kernel boundary, security scan, package build
+
 stages:
-- test
-- secret-detection
-sast:
-  stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
-- template: Security/Secret-Detection.gitlab-ci.yml
+  - lint
+  - test
+  - security
+  - build
+
 variables:
-  SECRET_DETECTION_ENABLED: 'true'
-secret_detection:
-  stage: secret-detection
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip/
+
+default:
+  image: python:3.11
+
+before_script:
+  - python --version
+  - pip install --upgrade pip
+  - pip install -e .
+
+# ============================================================================
+# LINT STAGE
+# ============================================================================
+
+lint:format:
+  stage: lint
+  script:
+    - pip install black
+    - black --check .
+  allow_failure: false
+
+# ============================================================================
+# TEST STAGE
+# ============================================================================
+
+tests:unit:
+  stage: test
+  script:
+    - pip install pytest pytest-asyncio
+    - pytest tests/ -v --tb=short
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+
+tests:kernel-boundary:
+  stage: test
+  script:
+    - pip install pytest
+    - pytest tests/test_kernel_dependencies.py -v
+  allow_failure: false
+
+tests:determinism:
+  stage: test
+  script:
+    - pip install pytest
+    - pytest tests/test_determinism.py tests/test_kernel_invariants.py -v
+  allow_failure: false
+
+# ============================================================================
+# SECURITY STAGE
+# ============================================================================
+
+security:bandit:
+  stage: security
+  script:
+    - pip install bandit
+    - bandit -r trigguard -lll -f json -o bandit-report.json || true
+    - bandit -r trigguard -lll
+  artifacts:
+    reports:
+      sast: bandit-report.json
+    when: always
+
+security:bypass-scan:
+  stage: security
+  script:
+    - python scan_bypass.py
+  allow_failure: false
+
+# ============================================================================
+# BUILD STAGE
+# ============================================================================
+
+build:package:
+  stage: build
+  script:
+    - pip install build
+    - python -m build
+    - ls -la dist/
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+build:verify-install:
+  stage: build
+  script:
+    - pip install build
+    - python -m build
+    - pip install dist/*.whl
+    - python -c "from trigguard import gate, guard, ExecutionAdapter; print('✓ Import verification passed')"
+  needs:
+    - build:package
+
+# ============================================================================
+# GITLAB SECURITY TEMPLATES (Ultimate)
+# ============================================================================
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml

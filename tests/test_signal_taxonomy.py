@@ -333,15 +333,14 @@ class TestDecisionEngineIntegration:
             SignalType as ContractSignalType,
             SignalSeverity as ContractSeverity,
         )
-        from constraints.constraint_evaluator import ConstraintEvaluator
+        from trigguard.constraints.constraint_evaluator import ConstraintEvaluator
         from uuid import uuid4
 
         # Create a request for an irreversible surface
         request = ExecutionRequest(
             request_id=uuid4(),
-            actor_id="test_user",
+            principal_id="test_user",
             action="test_action",
-            resource="test_resource",
             surface=ExecutionSurface.SPEND,  # Irreversible
         )
 

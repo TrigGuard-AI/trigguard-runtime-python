@@ -66,6 +66,9 @@ class ExecutionSurface(str, Enum):
         """Risk tier (1=highest, 3=lowest)."""
         if self.is_irreversible:
             return 1
+        # UNKNOWN surfaces fail closed - treat as highest risk
+        if self == ExecutionSurface.UNKNOWN:
+            return 1
         if self in {
             ExecutionSurface.EXTERNAL_API,
             ExecutionSurface.INTERNAL_API,

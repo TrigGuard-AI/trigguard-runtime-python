@@ -16,14 +16,14 @@ from dataclasses import dataclass, field
 from typing import Optional, Union
 import time
 
-from protocol.detection_event import (
+from trigguard.protocol.detection_event import (
     Detection,
     DetectionContext,
     DetectionRequest,
     DetectionResult,
 )
 from detectors.base_detector import BaseDetector
-from context.context_builder import ContextBuilder
+from trigguard.context.context_builder import ContextBuilder
 
 
 @dataclass
