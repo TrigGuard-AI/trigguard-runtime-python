@@ -3,16 +3,22 @@ Detection Pipeline
 
 Orchestrates the execution of detectors.
 Supports both sequential and parallel (async) execution.
+
+Flow:
+1. Request → ContextBuilder → DetectionContext
+2. DetectionContext → Parallel Detectors
+3. Detections collected and returned
 """
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union
 import time
 
-from protocol.detection_event import Detection, DetectionRequest, DetectionResult
+from protocol.detection_event import Detection, DetectionContext, DetectionRequest, DetectionResult
 from detectors.base_detector import BaseDetector
+from context.context_builder import ContextBuilder
 
 
 @dataclass
@@ -22,6 +28,7 @@ class PipelineConfig:
     parallel: bool = True        # Run detectors in parallel
     timeout_ms: float = 5000     # Max execution time per detector
     max_workers: int = 10        # Max parallel workers
+    use_context: bool = True     # Build DetectionContext before running detectors
 
 
 class Pipeline:
@@ -30,18 +37,21 @@ class Pipeline:
 
     The pipeline:
     1. Receives a request
-    2. Runs detectors (parallel or sequential)
-    3. Collects all detections
-    4. Returns list of detection signals
+    2. Builds DetectionContext (if use_context=True)
+    3. Runs detectors (parallel or sequential)
+    4. Collects all detections
+    5. Returns list of detection signals
 
     Supports:
     - Async parallel execution (default)
     - Sync sequential execution (fallback)
+    - Context-aware detection (multi-turn conversations)
     """
 
     def __init__(self, config: Optional[PipelineConfig] = None):
         self.config = config or PipelineConfig()
         self._detectors: list[BaseDetector] = []
+        self._context_builder = ContextBuilder()
         self._executor: Optional[ThreadPoolExecutor] = None
 
     def register(self, detector: BaseDetector) -> None:
@@ -53,18 +63,25 @@ class Pipeline:
         for detector in detectors:
             self.register(detector)
 
-    async def run_async(self, request: DetectionRequest) -> list[Detection]:
+    async def run_async(
+        self, request: DetectionRequest, context: Optional[DetectionContext] = None
+    ) -> list[Detection]:
         """
         Execute all detectors in parallel using asyncio.
 
         Args:
             request: The detection request to process.
+            context: Pre-built context (optional, built from request if not provided).
 
         Returns:
             List of detections found by all detectors.
         """
         if not self._detectors:
             return []
+
+        # Build context if not provided and config enables it
+        if context is None and self.config.use_context:
+            context = self._context_builder.build(request)
 
         enabled_detectors = [d for d in self._detectors if d.is_enabled()]
 
@@ -73,7 +90,7 @@ class Pipeline:
 
         # Run detectors in parallel
         tasks = [
-            self._run_detector_async(detector, request)
+            self._run_detector_async(detector, request, context)
             for detector in enabled_detectors
         ]
 
@@ -91,15 +108,27 @@ class Pipeline:
         return detections
 
     async def _run_detector_async(
-        self, detector: BaseDetector, request: DetectionRequest
+        self,
+        detector: BaseDetector,
+        request: DetectionRequest,
+        context: Optional[DetectionContext] = None,
     ) -> Optional[Detection]:
         """Run a single detector with timeout."""
         loop = asyncio.get_event_loop()
 
         try:
+            # Choose the right method based on detector capabilities
+            if context is not None and detector.supports_context:
+                analyze_fn = lambda: detector.analyze_context(context)
+            elif context is not None:
+                # Detector doesn't support context, use analyze_context default fallback
+                analyze_fn = lambda: detector.analyze_context(context)
+            else:
+                analyze_fn = lambda: detector.analyze(request)
+
             # Run sync detector in thread pool to not block
             result = await asyncio.wait_for(
-                loop.run_in_executor(None, detector.analyze, request),
+                loop.run_in_executor(None, analyze_fn),
                 timeout=self.config.timeout_ms / 1000,
             )
             return result
@@ -123,21 +152,28 @@ class Pipeline:
         Returns:
             List of detections found by all detectors.
         """
+        # Build context first if enabled
+        context = None
+        if self.config.use_context:
+            context = self._context_builder.build(request)
+
         if self.config.parallel:
             # Run async pipeline in sync context
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     # Already in async context, run sync fallback
-                    return self._run_sequential(request)
-                return loop.run_until_complete(self.run_async(request))
+                    return self._run_sequential(request, context)
+                return loop.run_until_complete(self.run_async(request, context))
             except RuntimeError:
                 # No event loop, create one
-                return asyncio.run(self.run_async(request))
+                return asyncio.run(self.run_async(request, context))
         else:
-            return self._run_sequential(request)
+            return self._run_sequential(request, context)
 
-    def _run_sequential(self, request: DetectionRequest) -> list[Detection]:
+    def _run_sequential(
+        self, request: DetectionRequest, context: Optional[DetectionContext] = None
+    ) -> list[Detection]:
         """Sequential execution fallback."""
         detections: list[Detection] = []
 
@@ -146,7 +182,14 @@ class Pipeline:
                 continue
 
             try:
-                result = detector.analyze(request)
+                # Choose the right method based on detector capabilities
+                if context is not None and detector.supports_context:
+                    result = detector.analyze_context(context)
+                elif context is not None:
+                    result = detector.analyze_context(context)
+                else:
+                    result = detector.analyze(request)
+
                 if result is not None:
                     detections.append(result)
 
