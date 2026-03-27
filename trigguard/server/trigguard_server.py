@@ -30,6 +30,7 @@ except ImportError:
     FastAPI = None
 
 from trigguard.server.routes import router
+from trigguard.server.well_known import well_known_router
 from trigguard.server.models import ErrorResponse
 
 # Configure logging
@@ -181,6 +182,7 @@ during evaluation, the decision defaults to DENY for safety.
 
     # Include routers
     application.include_router(router)
+    application.include_router(well_known_router)
 
     # Root endpoint
     @application.get("/")

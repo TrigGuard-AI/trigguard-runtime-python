@@ -32,6 +32,8 @@ from trigguard.core.execution_adapter import (
     FailClosedError,
 )
 from trigguard.protocol.decision_contracts import ExecutionSurface, Decision
+from trigguard.grants.verifier import ActionGrantVerifier
+from trigguard.verification.verifier_sdk import TrigGuardVerifierSDK
 
 __version__ = "0.1.0"
 
@@ -43,6 +45,9 @@ __all__ = [
     "ExecutionAdapter",
     "execute_if_permitted",
     "protected",
+    # Verification SDK
+    "ActionGrantVerifier",
+    "TrigGuardVerifierSDK",
     # Exceptions
     "ExecutionDenied",
     "FailClosedError",
