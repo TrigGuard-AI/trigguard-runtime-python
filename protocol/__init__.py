@@ -1,4 +1,5 @@
 from protocol.detection_event import (
+    AggregatedRisk,
     Detection,
     DetectionRequest,
     DetectionResult,
@@ -8,6 +9,7 @@ from protocol.detection_event import (
 )
 
 __all__ = [
+    "AggregatedRisk",
     "Detection",
     "DetectionRequest",
     "DetectionResult",

@@ -66,10 +66,70 @@ class Detection:
 
 
 @dataclass
+class AggregatedRisk:
+    """Result from risk aggregation stage."""
+    risk_score: float  # 0.0 to 1.0
+    severity: Severity
+    triggered_detectors: list[str] = field(default_factory=list)
+    detection_count: int = 0
+    max_confidence: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_detections(cls, detections: list[Detection]) -> "AggregatedRisk":
+        """Create AggregatedRisk from a list of detections."""
+        if not detections:
+            return cls(
+                risk_score=0.0,
+                severity=Severity.INFO,
+                triggered_detectors=[],
+                detection_count=0,
+                max_confidence=0.0,
+            )
+
+        # Calculate risk score based on severity and confidence
+        severity_weights = {
+            Severity.CRITICAL: 1.0,
+            Severity.HIGH: 0.8,
+            Severity.MEDIUM: 0.5,
+            Severity.LOW: 0.2,
+            Severity.INFO: 0.1,
+        }
+
+        weighted_scores = [
+            severity_weights[d.severity] * d.confidence for d in detections
+        ]
+
+        # Aggregate: use max + diminishing returns for additional signals
+        sorted_scores = sorted(weighted_scores, reverse=True)
+        risk_score = sorted_scores[0]
+        for i, score in enumerate(sorted_scores[1:], start=1):
+            risk_score += score * (0.5 ** i)  # Diminishing returns
+        risk_score = min(risk_score, 1.0)
+
+        # Determine aggregate severity
+        severity_order = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
+        max_severity = Severity.INFO
+        for severity in severity_order:
+            if any(d.severity == severity for d in detections):
+                max_severity = severity
+                break
+
+        return cls(
+            risk_score=risk_score,
+            severity=max_severity,
+            triggered_detectors=list(set(d.detector for d in detections)),
+            detection_count=len(detections),
+            max_confidence=max(d.confidence for d in detections),
+        )
+
+
+@dataclass
 class DetectionResult:
     """Aggregated result from the pipeline."""
     request_id: UUID
     detections: list[Detection] = field(default_factory=list)
+    aggregated_risk: Optional[AggregatedRisk] = None
     decision: Decision = Decision.ALLOW
     processing_time_ms: float = 0.0
     timestamp: datetime = field(default_factory=datetime.utcnow)
@@ -79,7 +139,16 @@ class DetectionResult:
         return len(self.detections) > 0
 
     @property
+    def risk_score(self) -> float:
+        """Convenience accessor for risk score."""
+        if self.aggregated_risk:
+            return self.aggregated_risk.risk_score
+        return 0.0
+
+    @property
     def max_severity(self) -> Optional[Severity]:
+        if self.aggregated_risk:
+            return self.aggregated_risk.severity
         if not self.detections:
             return None
         severity_order = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
