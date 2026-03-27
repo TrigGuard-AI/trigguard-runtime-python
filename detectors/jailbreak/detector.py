@@ -14,7 +14,7 @@ from typing import Optional
 import re
 
 from detectors.base_detector import BaseDetector
-from protocol.detection_event import (
+from trigguard.protocol.detection_event import (
     Detection,
     DetectionRequest,
     DetectionType,

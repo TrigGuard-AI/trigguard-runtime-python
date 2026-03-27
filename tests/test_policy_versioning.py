@@ -18,10 +18,12 @@ from trigguard.policy.policy_registry import (
     get_policy_version,
     TierThresholds,
 )
-from trigguard.signals.signal_types import SignalType, SignalSeverity
+from trigguard.signals.signal_types import SignalType as PolicySignalType
 from trigguard.protocol.decision_contracts import (
     Signal,
     SignalFrame,
+    SignalType,
+    SignalSeverity,
     ExecutionRequest,
     ExecutionSurface,
     Decision,
@@ -173,11 +175,11 @@ class TestPolicySignalSets:
     def test_sets_contain_valid_signals(self):
         """All entries are valid SignalTypes."""
         for signal in IRREVERSIBLE_FORBIDDEN:
-            assert isinstance(signal, SignalType)
+            assert isinstance(signal, PolicySignalType)
         for signal in SILENCE_TRIGGERS:
-            assert isinstance(signal, SignalType)
+            assert isinstance(signal, PolicySignalType)
         for signal in CRITICAL_SIGNALS:
-            assert isinstance(signal, SignalType)
+            assert isinstance(signal, PolicySignalType)
 
 
 class TestDecisionEngineUsesPolicy:

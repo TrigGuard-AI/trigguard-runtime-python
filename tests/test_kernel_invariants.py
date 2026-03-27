@@ -416,10 +416,10 @@ class TestArchitecturalBoundaries:
         This scans for any other class that might grant authorization.
         """
         # Import all relevant modules
-        import authority.decision_engine as engine_module
-        import constraints.constraint_evaluator as constraint_module
-        import surfaces.execution_surface as surface_module
-        import signals.signal_frame as signal_module
+        import trigguard.authority.decision_engine as engine_module
+        import trigguard.constraints.constraint_evaluator as constraint_module
+        import trigguard.surfaces.execution_surface as surface_module
+        import trigguard.signals.signal_frame as signal_module
 
         modules = [constraint_module, surface_module, signal_module]
 

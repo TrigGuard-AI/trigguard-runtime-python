@@ -209,7 +209,7 @@ class TestSignalFrameSerialization:
         )
         frame.add_signal(
             Signal(
-                signal_type=SignalType.UNAUTHORIZED_EXECUTION,
+                signal_type=SignalType.TOOL_CALL_ESCALATION,
                 severity=SignalSeverity.CRITICAL,
                 confidence=0.99,
                 source="code_detector",
@@ -222,7 +222,7 @@ class TestSignalFrameSerialization:
 
         assert parsed["surface"] == "code_execution"
         assert len(parsed["signals"]) == 1
-        assert parsed["signals"][0]["signal_type"] == "unauthorized_execution"
+        assert parsed["signals"][0]["signal_type"] == "tool_call_escalation"
 
     def test_metadata_is_sorted(self):
         """Metadata keys are sorted in canonical output."""

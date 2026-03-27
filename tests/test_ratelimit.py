@@ -355,7 +355,7 @@ class TestGlobalLimiter:
 
     def test_get_rate_limiter_singleton(self):
         """Test global limiter is singleton."""
-        import ratelimit.limiter as module
+        import trigguard.ratelimit.limiter as module
 
         module._limiter = None
 
@@ -373,7 +373,7 @@ class TestGlobalLimiter:
 
     def test_check_rate_limit(self):
         """Test global check function."""
-        import ratelimit.limiter as module
+        import trigguard.ratelimit.limiter as module
 
         module._limiter = None
 
@@ -382,7 +382,7 @@ class TestGlobalLimiter:
 
     def test_require_rate_limit_success(self):
         """Test require doesn't raise when allowed."""
-        import ratelimit.limiter as module
+        import trigguard.ratelimit.limiter as module
 
         module._limiter = None
 

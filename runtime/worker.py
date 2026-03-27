@@ -7,8 +7,8 @@ Entry point for the detection system.
 
 from typing import Any, Optional
 
-from engine.detection_engine import DetectionEngine
-from protocol.detection_event import DetectionRequest, DetectionResult
+from trigguard.engine.detection_engine import DetectionEngine
+from trigguard.protocol.detection_event import DetectionRequest, DetectionResult
 
 
 class Worker:

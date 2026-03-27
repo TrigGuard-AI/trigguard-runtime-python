@@ -364,7 +364,7 @@ class TestGlobalManager:
 
     def test_configure_ha_manager(self):
         """Test configuring global manager."""
-        import ha.cluster as module
+        import trigguard.ha.cluster as module
 
         module._ha_manager = None
 
@@ -376,7 +376,7 @@ class TestGlobalManager:
 
     def test_get_ha_manager(self):
         """Test getting global manager."""
-        import ha.cluster as module
+        import trigguard.ha.cluster as module
 
         module._ha_manager = None
 
@@ -389,7 +389,7 @@ class TestGlobalManager:
     @pytest.mark.asyncio
     async def test_start_ha_manager(self):
         """Test starting global manager."""
-        import ha.cluster as module
+        import trigguard.ha.cluster as module
 
         module._ha_manager = None
 
