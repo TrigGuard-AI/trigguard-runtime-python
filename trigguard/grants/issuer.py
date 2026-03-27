@@ -105,6 +105,7 @@ class ActionGrantIssuer:
         constraints: Optional[GrantConstraints] = None,
         ttl_seconds: int = 30,
         metadata: Optional[dict[str, Any]] = None,
+        kid: Optional[str] = None,
     ) -> ActionGrant:
         """
         Issue a signed Action Grant.
@@ -118,6 +119,7 @@ class ActionGrantIssuer:
             constraints: Explicit limits on execution
             ttl_seconds: Time-to-live in seconds (default: 30)
             metadata: Additional context
+            kid: Key ID for signature verification (for key rotation)
 
         Returns:
             Signed ActionGrant
@@ -172,6 +174,7 @@ class ActionGrantIssuer:
             policy_version=receipt.policy_version,
             decision_hash=receipt.decision_hash,
             receipt_hash=receipt.receipt_hash,
+            kid=kid,
             metadata=metadata,
             signature=None,
         )

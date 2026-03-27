@@ -114,6 +114,7 @@ class ActionGrant:
     receipt_hash: str
 
     # Optional
+    kid: Optional[str] = None  # Key ID for signature verification
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # Signature (not included in signed payload)
@@ -128,7 +129,7 @@ class ActionGrant:
         - No nondeterministic fields
         - Signature NOT included (it signs this payload)
         """
-        return {
+        result = {
             "action": self.action,
             "constraints": self.constraints.to_dict(),
             "decision_hash": self.decision_hash,
@@ -143,6 +144,9 @@ class ActionGrant:
             "subject": self.subject,
             "surface": self.surface,
         }
+        if self.kid is not None:
+            result["kid"] = self.kid
+        return result
 
     def to_canonical_json(self) -> str:
         """
@@ -183,6 +187,7 @@ class ActionGrant:
             policy_version=data["policy_version"],
             decision_hash=data["decision_hash"],
             receipt_hash=data["receipt_hash"],
+            kid=data.get("kid"),
             metadata=data.get("metadata", {}),
             signature=data.get("signature"),
         )
