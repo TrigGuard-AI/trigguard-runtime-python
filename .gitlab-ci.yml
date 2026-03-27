@@ -112,3 +112,13 @@ include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Dependency-Scanning.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
+
+# Override default before_script for template jobs (they use non-Python images)
+secret_detection:
+  before_script: []
+
+semgrep-sast:
+  before_script: []
+
+gemnasium-python-dependency_scanning:
+  before_script: []
