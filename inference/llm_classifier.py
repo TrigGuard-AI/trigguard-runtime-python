@@ -12,6 +12,7 @@ from typing import Optional
 @dataclass
 class ClassificationResult:
     """Result from the classifier."""
+
     label: str
     confidence: float  # 0.0 to 1.0
     raw_scores: Optional[dict[str, float]] = None
@@ -50,9 +51,7 @@ class LLMClassifier:
         # Placeholder implementation
         # Real implementation would run inference
         return ClassificationResult(
-            label="safe",
-            confidence=0.95,
-            raw_scores={"safe": 0.95, "threat": 0.05}
+            label="safe", confidence=0.95, raw_scores={"safe": 0.95, "threat": 0.05}
         )
 
     def classify_batch(self, texts: list[str]) -> list[ClassificationResult]:

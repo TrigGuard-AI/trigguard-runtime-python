@@ -10,7 +10,7 @@ from pathlib import Path
 # Add kernel root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from protocol.decision_contracts import (
+from trigguard.protocol.decision_contracts import (
     Decision,
     DenyReason,
     ExecutionRequest,
@@ -20,7 +20,7 @@ from protocol.decision_contracts import (
     SignalType,
     SignalSeverity,
 )
-from authority.decision_engine import DecisionEngine
+from trigguard.authority.decision_engine import DecisionEngine
 
 
 def test_deterministic_same_input_same_output():
@@ -35,13 +35,15 @@ def test_deterministic_same_input_same_output():
 
     # Build a signal frame with a high-risk signal
     frame = SignalFrame(request_id=request.request_id)
-    frame.add_signal(Signal(
-        signal_type=SignalType.PROMPT_OVERRIDE,
-        severity=SignalSeverity.HIGH,
-        confidence=0.9,
-        source="test",
-        description="Test override signal",
-    ))
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.PROMPT_OVERRIDE,
+            severity=SignalSeverity.HIGH,
+            confidence=0.9,
+            source="test",
+            description="Test override signal",
+        )
+    )
 
     # Run authorization multiple times
     results = []
@@ -64,13 +66,15 @@ def test_high_risk_signal_on_irreversible_surface_denied():
     )
 
     frame = SignalFrame(request_id=request.request_id)
-    frame.add_signal(Signal(
-        signal_type=SignalType.JAILBREAK_ATTEMPT,
-        severity=SignalSeverity.CRITICAL,
-        confidence=0.85,
-        source="jailbreak_detector",
-        description="Jailbreak detected",
-    ))
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.JAILBREAK_ATTEMPT,
+            severity=SignalSeverity.CRITICAL,
+            confidence=0.85,
+            source="jailbreak_detector",
+            description="Jailbreak detected",
+        )
+    )
 
     receipt = engine.authorize(request, signal_frame=frame)
 
@@ -127,20 +131,24 @@ def test_risk_threshold_exceeded_denied():
 
     # Add multiple signals to exceed threshold
     frame = SignalFrame(request_id=request.request_id)
-    frame.add_signal(Signal(
-        signal_type=SignalType.PROMPT_OVERRIDE,
-        severity=SignalSeverity.HIGH,
-        confidence=0.9,
-        source="test",
-        description="Override 1",
-    ))
-    frame.add_signal(Signal(
-        signal_type=SignalType.TOOL_CALL_ESCALATION,
-        severity=SignalSeverity.HIGH,
-        confidence=0.85,
-        source="test",
-        description="Escalation",
-    ))
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.PROMPT_OVERRIDE,
+            severity=SignalSeverity.HIGH,
+            confidence=0.9,
+            source="test",
+            description="Override 1",
+        )
+    )
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.TOOL_CALL_ESCALATION,
+            severity=SignalSeverity.HIGH,
+            confidence=0.85,
+            source="test",
+            description="Escalation",
+        )
+    )
 
     receipt = engine.authorize(request, signal_frame=frame)
 
@@ -159,19 +167,24 @@ def test_forbidden_signal_on_irreversible_denied():
     )
 
     frame = SignalFrame(request_id=request.request_id)
-    frame.add_signal(Signal(
-        signal_type=SignalType.ROLE_ESCALATION,  # Forbidden on irreversible
-        severity=SignalSeverity.HIGH,
-        confidence=0.8,
-        source="test",
-        description="Role escalation attempt",
-    ))
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.ROLE_ESCALATION,  # Forbidden on irreversible
+            severity=SignalSeverity.HIGH,
+            confidence=0.8,
+            source="test",
+            description="Role escalation attempt",
+        )
+    )
 
     receipt = engine.authorize(request, signal_frame=frame)
 
     assert receipt.decision == Decision.DENY
     # May be FORBIDDEN_SIGNAL or CONSTRAINT_VIOLATION
-    assert receipt.reason in [DenyReason.FORBIDDEN_SIGNAL, DenyReason.CONSTRAINT_VIOLATION]
+    assert receipt.reason in [
+        DenyReason.FORBIDDEN_SIGNAL,
+        DenyReason.CONSTRAINT_VIOLATION,
+    ]
     print("✓ Forbidden signal on irreversible → DENY")
 
 
@@ -185,13 +198,15 @@ def test_probing_attack_silenced():
     )
 
     frame = SignalFrame(request_id=request.request_id)
-    frame.add_signal(Signal(
-        signal_type=SignalType.MODEL_ENUMERATION,
-        severity=SignalSeverity.MEDIUM,
-        confidence=0.85,
-        source="test",
-        description="Model probing detected",
-    ))
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.MODEL_ENUMERATION,
+            severity=SignalSeverity.MEDIUM,
+            confidence=0.85,
+            source="test",
+            description="Model probing detected",
+        )
+    )
 
     receipt = engine.authorize(request, signal_frame=frame)
 
@@ -282,20 +297,24 @@ def test_multiple_constraint_violations():
 
     frame = SignalFrame(request_id=request.request_id)
     # Add multiple forbidden signals
-    frame.add_signal(Signal(
-        signal_type=SignalType.PROMPT_OVERRIDE,
-        severity=SignalSeverity.HIGH,
-        confidence=0.9,
-        source="test",
-        description="Override",
-    ))
-    frame.add_signal(Signal(
-        signal_type=SignalType.ROLE_ESCALATION,
-        severity=SignalSeverity.CRITICAL,
-        confidence=0.95,
-        source="test",
-        description="Escalation",
-    ))
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.PROMPT_OVERRIDE,
+            severity=SignalSeverity.HIGH,
+            confidence=0.9,
+            source="test",
+            description="Override",
+        )
+    )
+    frame.add_signal(
+        Signal(
+            signal_type=SignalType.ROLE_ESCALATION,
+            severity=SignalSeverity.CRITICAL,
+            confidence=0.95,
+            source="test",
+            description="Escalation",
+        )
+    )
 
     receipt = engine.authorize(request, signal_frame=frame)
 

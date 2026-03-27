@@ -10,13 +10,13 @@ from pathlib import Path
 # Add kernel root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from protocol.detection_event import (
+from trigguard.protocol.detection_event import (
     Detection,
     DetectionType,
     Severity,
     AggregatedRisk,
 )
-from aggregation.risk_aggregator import RiskAggregator
+from trigguard.aggregation.risk_aggregator import RiskAggregator
 
 
 def test_no_detections_low_risk():
@@ -105,7 +105,9 @@ def test_multiple_medium_aggregates_to_high():
     assert result.risk_score >= 0.4
     assert result.detection_count == 3
     assert len(result.triggered_detectors) == 3
-    print(f"✓ Multiple medium signals → aggregated risk {result.risk_score:.2f} test passed")
+    print(
+        f"✓ Multiple medium signals → aggregated risk {result.risk_score:.2f} test passed"
+    )
 
 
 def test_diminishing_returns():

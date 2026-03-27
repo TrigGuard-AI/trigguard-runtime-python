@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from protocol.decision_contracts import (
+from trigguard.protocol.decision_contracts import (
     Signal,
     SignalFrame,
     SignalType,
@@ -18,7 +18,7 @@ from protocol.decision_contracts import (
     DenyReason,
     DecisionReceipt,
 )
-from protocol.decision_receipt import (
+from trigguard.protocol.decision_receipt import (
     generate_receipt,
     verify_receipt,
     receipt_from_dict,
@@ -31,17 +31,17 @@ class TestGenerateReceipt:
     def test_generate_receipt_returns_receipt(self):
         """generate_receipt returns a DecisionReceipt."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         assert isinstance(receipt, DecisionReceipt)
 
     def test_generate_receipt_has_valid_hashes(self):
         """Generated receipt has all hashes populated."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         assert receipt.has_valid_hashes
         assert len(receipt.frame_hash) == 64
         assert len(receipt.decision_hash) == 64
@@ -50,9 +50,9 @@ class TestGenerateReceipt:
     def test_generate_receipt_is_frozen(self):
         """Generated receipt is frozen to prevent modification."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         assert receipt.is_frozen
 
     def test_generate_receipt_copies_frame_data(self):
@@ -61,20 +61,22 @@ class TestGenerateReceipt:
             request_id=uuid4(),
             surface=ExecutionSurface.SPEND,
         )
-        frame.add_signal(Signal(
-            signal_type=SignalType.JAILBREAK_ATTEMPT,
-            severity=SignalSeverity.CRITICAL,
-            confidence=0.95,
-            source="test",
-            description="test",
-        ))
-        
+        frame.add_signal(
+            Signal(
+                signal_type=SignalType.JAILBREAK_ATTEMPT,
+                severity=SignalSeverity.CRITICAL,
+                confidence=0.95,
+                source="test",
+                description="test",
+            )
+        )
+
         receipt = generate_receipt(
             frame,
             Decision.DENY,
             reason=DenyReason.FORBIDDEN_SIGNAL,
         )
-        
+
         assert receipt.request_id == frame.request_id
         assert receipt.surface == ExecutionSurface.SPEND
         assert receipt.risk_score == frame.risk_score
@@ -86,7 +88,7 @@ class TestGenerateReceipt:
         """Same inputs produce same hashes."""
         request_id = uuid4()
         timestamp = datetime(2024, 1, 15, 12, 0, 0)
-        
+
         frame1 = SignalFrame(
             request_id=request_id,
             surface=ExecutionSurface.INFERENCE,
@@ -97,26 +99,30 @@ class TestGenerateReceipt:
             surface=ExecutionSurface.INFERENCE,
             timestamp=timestamp,
         )
-        
+
         receipt1 = generate_receipt(frame1, Decision.PERMIT)
         receipt2 = generate_receipt(frame2, Decision.PERMIT)
-        
+
         # Frame hashes should match (same frame)
         assert receipt1.frame_hash == receipt2.frame_hash
 
     def test_generate_receipt_includes_signals_summary(self):
         """Receipt includes signals summary."""
         frame = SignalFrame(request_id=uuid4())
-        frame.add_signal(Signal(
-            signal_type=SignalType.PROMPT_OVERRIDE,
-            severity=SignalSeverity.HIGH,
-            confidence=0.8,
-            source="test",
-            description="test",
-        ))
-        
-        receipt = generate_receipt(frame, Decision.DENY, reason=DenyReason.FORBIDDEN_SIGNAL)
-        
+        frame.add_signal(
+            Signal(
+                signal_type=SignalType.PROMPT_OVERRIDE,
+                severity=SignalSeverity.HIGH,
+                confidence=0.8,
+                source="test",
+                description="test",
+            )
+        )
+
+        receipt = generate_receipt(
+            frame, Decision.DENY, reason=DenyReason.FORBIDDEN_SIGNAL
+        )
+
         assert len(receipt.signals_summary) > 0
         assert "prompt_override:high" in receipt.signals_summary
 
@@ -127,18 +133,20 @@ class TestVerifyReceipt:
     def test_valid_receipt_verifies(self):
         """Correctly generated receipt passes verification."""
         frame = SignalFrame(request_id=uuid4())
-        frame.add_signal(Signal(
-            signal_type=SignalType.ANOMALY,
-            severity=SignalSeverity.LOW,
-            confidence=0.3,
-            source="test",
-            description="test",
-        ))
-        
+        frame.add_signal(
+            Signal(
+                signal_type=SignalType.ANOMALY,
+                severity=SignalSeverity.LOW,
+                confidence=0.3,
+                source="test",
+                description="test",
+            )
+        )
+
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         is_valid, errors = verify_receipt(receipt, frame)
-        
+
         assert is_valid
         assert len(errors) == 0
 
@@ -146,7 +154,7 @@ class TestVerifyReceipt:
         """Tampering with frame_hash is detected."""
         frame = SignalFrame(request_id=uuid4())
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         # Tamper with frame hash
         # Need to unfreeze first (simulate storage/retrieval)
         tampered = DecisionReceipt(
@@ -162,9 +170,9 @@ class TestVerifyReceipt:
             evaluated_at=receipt.evaluated_at,
             policy_version=receipt.policy_version,
         )
-        
+
         is_valid, errors = verify_receipt(tampered, frame)
-        
+
         assert not is_valid
         assert any("hash" in e.lower() for e in errors)
 
@@ -172,7 +180,7 @@ class TestVerifyReceipt:
         """Tampering with decision_hash is detected."""
         frame = SignalFrame(request_id=uuid4())
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         tampered = DecisionReceipt(
             receipt_id=receipt.receipt_id,
             request_id=receipt.request_id,
@@ -186,16 +194,16 @@ class TestVerifyReceipt:
             evaluated_at=receipt.evaluated_at,
             policy_version=receipt.policy_version,
         )
-        
+
         is_valid, errors = verify_receipt(tampered, frame)
-        
+
         assert not is_valid
 
     def test_tampered_receipt_hash_detected(self):
         """Tampering with receipt_hash is detected."""
         frame = SignalFrame(request_id=uuid4())
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         tampered = DecisionReceipt(
             receipt_id=receipt.receipt_id,
             request_id=receipt.request_id,
@@ -209,9 +217,9 @@ class TestVerifyReceipt:
             evaluated_at=receipt.evaluated_at,
             policy_version=receipt.policy_version,
         )
-        
+
         is_valid, errors = verify_receipt(tampered, frame)
-        
+
         assert not is_valid
 
 
@@ -222,10 +230,10 @@ class TestReceiptChain:
         """Receipt hash depends on frame hash."""
         frame1 = SignalFrame(request_id=uuid4())
         frame2 = SignalFrame(request_id=uuid4())  # Different request
-        
+
         receipt1 = generate_receipt(frame1, Decision.PERMIT)
         receipt2 = generate_receipt(frame2, Decision.PERMIT)
-        
+
         # Different frames = different frame hashes
         assert receipt1.frame_hash != receipt2.frame_hash
         # Different frame hashes = different receipt hashes
@@ -234,12 +242,12 @@ class TestReceiptChain:
     def test_receipt_hash_changes_with_decision(self):
         """Receipt hash changes when decision changes."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt_permit = generate_receipt(frame, Decision.PERMIT)
         receipt_deny = generate_receipt(
             frame, Decision.DENY, reason=DenyReason.POLICY_DENIAL
         )
-        
+
         # Same frame = same frame hash
         assert receipt_permit.frame_hash == receipt_deny.frame_hash
         # Different decision = different decision hash
@@ -250,10 +258,10 @@ class TestReceiptChain:
     def test_receipt_hash_changes_with_policy_version(self):
         """Receipt hash changes when policy version changes."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt_v1 = generate_receipt(frame, Decision.PERMIT, policy_version="v1")
         receipt_v2 = generate_receipt(frame, Decision.PERMIT, policy_version="v2")
-        
+
         # Different policy version = different receipt hash
         assert receipt_v1.receipt_hash != receipt_v2.receipt_hash
 
@@ -267,22 +275,24 @@ class TestReceiptSerialization:
             request_id=uuid4(),
             surface=ExecutionSurface.SPEND,
         )
-        frame.add_signal(Signal(
-            signal_type=SignalType.JAILBREAK_ATTEMPT,
-            severity=SignalSeverity.CRITICAL,
-            confidence=0.9,
-            source="test",
-            description="test",
-        ))
-        
+        frame.add_signal(
+            Signal(
+                signal_type=SignalType.JAILBREAK_ATTEMPT,
+                severity=SignalSeverity.CRITICAL,
+                confidence=0.9,
+                source="test",
+                description="test",
+            )
+        )
+
         receipt = generate_receipt(
             frame,
             Decision.DENY,
             reason=DenyReason.FORBIDDEN_SIGNAL,
         )
-        
+
         data = receipt.to_canonical_dict()
-        
+
         assert "receipt_id" in data
         assert "request_id" in data
         assert "decision" in data
@@ -298,9 +308,9 @@ class TestReceiptSerialization:
         """to_audit_dict includes audit-relevant fields."""
         frame = SignalFrame(request_id=uuid4())
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         audit = receipt.to_audit_dict()
-        
+
         assert "receipt_id" in audit
         assert "decision" in audit
         assert "frame_hash" in audit
@@ -313,13 +323,13 @@ class TestReceiptSerialization:
             surface=ExecutionSurface.INFERENCE,
         )
         original = generate_receipt(frame, Decision.PERMIT)
-        
+
         # Serialize
         data = original.to_canonical_dict()
-        
+
         # Deserialize
         restored = receipt_from_dict(data)
-        
+
         # Core fields should match
         assert str(restored.receipt_id) == str(original.receipt_id)
         assert str(restored.request_id) == str(original.request_id)
@@ -337,29 +347,29 @@ class TestReceiptDenyReason:
     def test_deny_requires_reason(self):
         """DENY decision must have a reason."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt = generate_receipt(
             frame,
             Decision.DENY,
             reason=DenyReason.FORBIDDEN_SIGNAL,
         )
-        
+
         assert receipt.reason == DenyReason.FORBIDDEN_SIGNAL
 
     def test_deny_without_reason_defaults_to_fail_closed(self):
         """DENY without explicit reason defaults to FAIL_CLOSED."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt = generate_receipt(frame, Decision.DENY)
-        
+
         assert receipt.reason == DenyReason.FAIL_CLOSED
 
     def test_permit_has_no_reason(self):
         """PERMIT decision has no reason."""
         frame = SignalFrame(request_id=uuid4())
-        
+
         receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         assert receipt.reason is None
 
 
@@ -369,7 +379,7 @@ class TestReceiptIntegrity:
     def test_complete_flow_maintains_integrity(self):
         """
         Full flow: create frame → generate receipt → verify.
-        
+
         This simulates the production authorization flow.
         """
         # 1. Create frame with signals
@@ -377,21 +387,25 @@ class TestReceiptIntegrity:
             request_id=uuid4(),
             surface=ExecutionSurface.SPEND,
         )
-        frame.add_signal(Signal(
-            signal_type=SignalType.JAILBREAK_ATTEMPT,
-            severity=SignalSeverity.CRITICAL,
-            confidence=0.95,
-            source="jailbreak_detector",
-            description="DAN jailbreak pattern detected",
-        ))
-        frame.add_signal(Signal(
-            signal_type=SignalType.PROMPT_OVERRIDE,
-            severity=SignalSeverity.HIGH,
-            confidence=0.8,
-            source="prompt_detector",
-            description="Instruction override detected",
-        ))
-        
+        frame.add_signal(
+            Signal(
+                signal_type=SignalType.JAILBREAK_ATTEMPT,
+                severity=SignalSeverity.CRITICAL,
+                confidence=0.95,
+                source="jailbreak_detector",
+                description="DAN jailbreak pattern detected",
+            )
+        )
+        frame.add_signal(
+            Signal(
+                signal_type=SignalType.PROMPT_OVERRIDE,
+                severity=SignalSeverity.HIGH,
+                confidence=0.8,
+                source="prompt_detector",
+                description="Instruction override detected",
+            )
+        )
+
         # 2. Generate receipt (simulates DecisionEngine output)
         receipt = generate_receipt(
             frame=frame,
@@ -405,10 +419,10 @@ class TestReceiptIntegrity:
             ],
             evaluation_time_ms=1.5,
         )
-        
+
         # 3. Verify integrity
         is_valid, errors = verify_receipt(receipt, frame)
-        
+
         assert is_valid, f"Integrity check failed: {errors}"
         assert receipt.has_valid_hashes
         assert receipt.is_frozen
@@ -416,24 +430,24 @@ class TestReceiptIntegrity:
     def test_receipt_survives_storage_roundtrip(self):
         """Receipt can be stored, retrieved, and verified."""
         import json
-        
+
         # Create and generate
         frame = SignalFrame(
             request_id=uuid4(),
             surface=ExecutionSurface.EXTERNAL_API,
         )
         original_receipt = generate_receipt(frame, Decision.PERMIT)
-        
+
         # Store (as JSON)
         stored = json.dumps(original_receipt.to_canonical_dict())
-        
+
         # Retrieve
         data = json.loads(stored)
         restored_receipt = receipt_from_dict(data)
-        
+
         # Verify restored receipt against original frame
         # Note: We need the original frame for verification
         # In production, frames would also need to be stored
         is_valid, errors = verify_receipt(restored_receipt, frame)
-        
+
         assert is_valid, f"Verification after storage failed: {errors}"

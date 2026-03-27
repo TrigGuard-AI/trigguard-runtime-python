@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trigguard"
+version = "0.1.0"
+description = "Execution authorization infrastructure for AI agents"
+authors = [{name = "TrigGuard", email = "team@trigguard.ai"}]
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+keywords = ["ai", "agents", "authorization", "security", "execution-gate"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.22.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
+]
+server = [
+    "httpx>=0.24.0",
+]
+
+[project.scripts]
+trigguard-server = "trigguard.server.trigguard_server:main"
+trigguard-audit = "trigguard.tools.audit_cli:main"
+
+[project.urls]
+Homepage = "https://trigguard.ai"
+Documentation = "https://docs.trigguard.ai"
+Repository = "https://gitlab.com/TrigGuardAI/trigguard-kernel"
+Issues = "https://gitlab.com/TrigGuardAI/trigguard-kernel/-/issues"
+
+[tool.setuptools.packages.find]
+include = ["trigguard*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"

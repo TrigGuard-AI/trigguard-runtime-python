@@ -1,62 +1,191 @@
-# TrigGuard-Kernel
+# TrigGuard
 
+**TrigGuard is an execution authorization layer for AI agents.**
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+It sits between AI systems and real-world actions, ensuring that dangerous
+or irreversible operations only execute with explicit authorization.
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/TrigGuardAI/trigguard-kernel.git
-git branch -M main
-git push -uf origin main
+AI Agent
+   ↓
+TrigGuard Gate
+   ↓
+Execution
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](https://gitlab.com/TrigGuardAI/trigguard-kernel/-/settings/integrations)
+## Installation
 
-## Collaborate with your team
+```bash
+pip install trigguard
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+---
 
-## Test and Deploy
+## Quick Start
 
-Use the built-in continuous integration in GitLab.
+### Simple Gate Check
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+```python
+from trigguard import gate
 
-***
+# Check before executing
+decision = gate.check({
+    "surface": "SPEND",
+    "action": "transfer_funds",
+    "arguments": {"amount": 1000}
+})
 
-# Editing this README
+if decision.permit:
+    transfer_funds()
+else:
+    print(f"Blocked: {decision.reason}")
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Guard Decorator
 
-## Suggestions for a good README
+```python
+from trigguard import guard
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+@guard(surface="CODE_EXEC")
+def run_shell(cmd: str):
+    """Protected by TrigGuard. Raises if denied."""
+    subprocess.run(cmd, shell=True)
 
-## Name
-Choose a self-explaining name for your project.
+# Function only executes if TrigGuard permits
+run_shell("rm -rf /tmp/cache")
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+---
+
+## Architecture
+
+```
+┌─────────────────┐
+│    AI Agent     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   TrigGuard     │
+│ Execution Gate  │
+│                 │
+│  Policy Engine  │
+│        │        │
+│  PERMIT │ DENY  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Real World    │
+│   Execution     │
+└─────────────────┘
+```
+
+---
+
+## Core Capabilities
+
+| Capability | Description |
+|------------|-------------|
+| **Execution Gating** | All actions pass through authorization gate |
+| **Decision Receipts** | Cryptographic proof of every decision |
+| **Deterministic Replay** | Decisions can be replayed for verification |
+| **Irreversible Protection** | Strict evaluation for dangerous actions |
+| **Policy Network** | Distributed policy updates via signed bundles |
+| **Fail-Closed** | Errors result in DENY, never accidental permit |
+
+---
+
+## Protected Surfaces
+
+TrigGuard protects irreversible actions by default:
+
+| Surface | Risk | Description |
+|---------|------|-------------|
+| `SPEND` | Tier 1 | Financial transactions |
+| `DATA_EXPORT` | Tier 1 | Data leaving the system |
+| `CODE_EXEC` | Tier 1 | Running arbitrary code |
+| `DELEGATION` | Tier 1 | Authority transfer |
+| `IDENTITY_ASSERTION` | Tier 1 | Acting as specific identity |
+
+---
+
+## CLI Tools
+
+```bash
+# Verify a decision receipt
+trigguard-audit verify receipt.json
+
+# Replay a decision
+trigguard-audit replay receipt.json --frame frame.json
+
+# Explain a decision
+trigguard-audit explain receipt.json
+
+# Inspect policy
+trigguard-audit inspect-policy
+
+# Export decision logs
+trigguard-audit export-decisions logs.jsonl
+```
+
+---
+
+## Integrations
+
+### FastAPI Middleware
+
+```python
+from trigguard.integrations import TrigGuardMiddleware
+
+app.add_middleware(
+    TrigGuardMiddleware,
+    surface="DATA_EXPORT"
+)
+```
+
+### Agent Tool Guard
+
+```python
+from trigguard.integrations import guarded_tool
+
+@guarded_tool(surface="CODE_EXEC")
+def run_code(code: str):
+    exec(code)
+```
+
+---
+
+## The Key Metric
+
+**Execution Gates Evaluated per Day**
+
+This is how TrigGuard proves it's infrastructure:
+- Cloudflare → requests/sec
+- Stripe → payment volume
+- TrigGuard → gates evaluated
+
+---
+
+## Documentation
+
+- [Execution Gate Architecture](docs/EXECUTION_GATE_ARCHITECTURE.md)
+- [Threat Model](docs/THREAT_MODEL.md)
+- [Signal Taxonomy](docs/SIGNAL_TAXONOMY.md)
+
+---
+
+## License
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for security policies and reporting vulnerabilities.
 
 ## Badges
 On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
