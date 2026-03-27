@@ -24,6 +24,12 @@ NO REAL-WORLD ACTION MAY EXECUTE WITHOUT TRIGGUARD AUTHORIZATION.
 """
 
 from trigguard.sdk.gate import gate, guard
+from trigguard.sdk.decorators import (
+    requires_grant,
+    requires_grant_async,
+    GrantVerificationError,
+    MissingGrantError,
+)
 from trigguard.core.execution_adapter import (
     ExecutionAdapter,
     execute_if_permitted,
@@ -49,6 +55,9 @@ __all__ = [
     # Primary API
     "gate",
     "guard",
+    # Grant decorator (simplest integration)
+    "requires_grant",
+    "requires_grant_async",
     # Execution Adapter
     "ExecutionAdapter",
     "execute_if_permitted",
@@ -64,6 +73,8 @@ __all__ = [
     # Exceptions
     "ExecutionDenied",
     "FailClosedError",
+    "GrantVerificationError",
+    "MissingGrantError",
     # Types
     "ExecutionSurface",
     "Decision",

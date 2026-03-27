@@ -61,11 +61,23 @@ from trigguard.sdk.gate import (
     ExecutionRequest,
     GateMetrics,
 )
+from trigguard.sdk.decorators import (
+    requires_grant,
+    requires_grant_async,
+    GrantVerificationError,
+    MissingGrantError,
+    is_protected,
+    get_protected_surface,
+    get_protected_action,
+)
 
 __all__ = [
     # Primary API
     "gate",
     "guard",
+    # Grant decorator
+    "requires_grant",
+    "requires_grant_async",
     # Classes
     "TrigGuardGate",
     "GateResult",
@@ -73,6 +85,13 @@ __all__ = [
     "GateDeniedError",
     "ExecutionRequest",
     "GateMetrics",
+    # Decorator exceptions
+    "GrantVerificationError",
+    "MissingGrantError",
+    # Introspection
+    "is_protected",
+    "get_protected_surface",
+    "get_protected_action",
 ]
 
 __version__ = "0.1.0"
