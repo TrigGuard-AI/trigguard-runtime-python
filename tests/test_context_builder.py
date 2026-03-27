@@ -10,8 +10,13 @@ from pathlib import Path
 # Add kernel root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from protocol.detection_event import DetectionRequest, DetectionContext, Message, ToolCall
-from context.context_builder import ContextBuilder
+from trigguard.protocol.detection_event import (
+    DetectionRequest,
+    DetectionContext,
+    Message,
+    ToolCall,
+)
+from trigguard.context.context_builder import ContextBuilder
 
 
 def test_simple_prompt_context():

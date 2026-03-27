@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 class ModelType(str, Enum):
     """Types of models in the registry."""
+
     CLASSIFIER = "classifier"
     EMBEDDINGS = "embeddings"
     RULES = "rules"
@@ -20,6 +21,7 @@ class ModelType(str, Enum):
 @dataclass
 class ModelInfo:
     """Metadata about a registered model."""
+
     name: str
     version: str
     model_type: ModelType

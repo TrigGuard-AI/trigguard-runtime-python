@@ -16,7 +16,12 @@ from dataclasses import dataclass, field
 from typing import Optional, Union
 import time
 
-from protocol.detection_event import Detection, DetectionContext, DetectionRequest, DetectionResult
+from protocol.detection_event import (
+    Detection,
+    DetectionContext,
+    DetectionRequest,
+    DetectionResult,
+)
 from detectors.base_detector import BaseDetector
 from context.context_builder import ContextBuilder
 
@@ -24,11 +29,12 @@ from context.context_builder import ContextBuilder
 @dataclass
 class PipelineConfig:
     """Pipeline configuration."""
-    fail_fast: bool = False      # Stop on first detection (sequential only)
-    parallel: bool = True        # Run detectors in parallel
-    timeout_ms: float = 5000     # Max execution time per detector
-    max_workers: int = 10        # Max parallel workers
-    use_context: bool = True     # Build DetectionContext before running detectors
+
+    fail_fast: bool = False  # Stop on first detection (sequential only)
+    parallel: bool = True  # Run detectors in parallel
+    timeout_ms: float = 5000  # Max execution time per detector
+    max_workers: int = 10  # Max parallel workers
+    use_context: bool = True  # Build DetectionContext before running detectors
 
 
 class Pipeline:

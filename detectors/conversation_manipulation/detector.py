@@ -142,9 +142,7 @@ class ConversationManipulationDetector(BaseDetector):
                 )
         return None
 
-    def _detect_role_escalation(
-        self, context: DetectionContext
-    ) -> Optional[Detection]:
+    def _detect_role_escalation(self, context: DetectionContext) -> Optional[Detection]:
         """
         Detect gradual role escalation across conversation.
 
@@ -155,9 +153,7 @@ class ConversationManipulationDetector(BaseDetector):
 
         # Check all user messages including current
         all_user_content = [
-            msg.content
-            for msg in context.conversation_history
-            if msg.role == "user"
+            msg.content for msg in context.conversation_history if msg.role == "user"
         ]
         all_user_content.append(context.current_prompt)
 
@@ -225,9 +221,7 @@ class ConversationManipulationDetector(BaseDetector):
         """
         # Combine recent user messages
         recent_user_content = " ".join(
-            msg.content
-            for msg in context.recent_messages
-            if msg.role == "user"
+            msg.content for msg in context.recent_messages if msg.role == "user"
         )
         recent_user_content += " " + context.current_prompt
 

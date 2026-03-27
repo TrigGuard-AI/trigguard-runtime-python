@@ -65,3 +65,12 @@ Thumbs.db
 *.pem
 *.key
 secrets/
+.venv/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.test_venv/
+__pycache__/
+*.pyc

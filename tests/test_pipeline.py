@@ -10,8 +10,8 @@ from pathlib import Path
 # Add kernel root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from protocol.detection_event import DetectionRequest, Decision, Severity
-from engine.detection_engine import DetectionEngine
+from trigguard.protocol.detection_event import DetectionRequest, Decision, Severity
+from trigguard.engine.detection_engine import DetectionEngine
 from pipeline.pipeline import Pipeline
 from detectors.prompt_injection.detector import PromptInjectionDetector
 from detectors.jailbreak.detector import JailbreakDetector
