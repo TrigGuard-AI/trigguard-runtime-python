@@ -50,10 +50,28 @@ from trigguard.discovery.discovery_contract import (
     SurfaceDiscoveryRecord,
     ConstraintSchema,
 )
+
 from trigguard.attestation import AttestationRegistry
+from trigguard.discovery.policy import build_policy
 
 # Router for well-known surface endpoints
 surface_router = APIRouter(tags=["well-known", "surfaces"])
+
+
+# Policy discovery endpoint
+@surface_router.get("/.well-known/trigguard-policy")
+async def get_trigguard_policy():
+    """
+    Policy discovery endpoint.
+
+    Returns protocol-level metadata for TrigGuard execution governance.
+    This endpoint is read-only and exposes no decision authority.
+    """
+    return JSONResponse(
+        content=build_policy().to_dict(),
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
 
 # Current discovery manifest (configured at startup)
 _current_manifest: Optional[DiscoveryManifest] = None

@@ -1,3 +1,8 @@
+from trigguard.sdk.proof import (
+    verify_execution_proof_header,
+    extract_and_verify_proof_from_response,
+)
+
 """
 TrigGuard SDK
 
@@ -107,6 +112,9 @@ __all__ = [
     "is_protected",
     "get_protected_surface",
     "get_protected_action",
+    # Proof helpers
+    "verify_execution_proof_header",
+    "extract_and_verify_proof_from_response",
 ]
 
 __version__ = "0.1.0"

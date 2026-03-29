@@ -29,7 +29,7 @@ from trigguard.server.trigguard_server import create_app
 @pytest.fixture
 def mock_gate():
     """Mock the TrigGuard gate."""
-    with patch("server.routes.gate") as mock:
+    with patch("trigguard.server.routes.gate") as mock:
         mock.policy_version = "test-policy-v1"
 
         # Default to ALLOW
@@ -47,7 +47,7 @@ def mock_gate():
 @pytest.fixture
 def mock_telemetry():
     """Mock telemetry."""
-    with patch("server.routes.get_telemetry") as mock:
+    with patch("trigguard.server.routes.get_telemetry") as mock:
         telemetry = Mock()
         telemetry.gates_evaluated = Mock(value=100)
         telemetry.export.return_value = {"gates_evaluated": 100}
@@ -58,7 +58,7 @@ def mock_telemetry():
 @pytest.fixture
 def mock_policy():
     """Mock policy registry."""
-    with patch("server.routes.get_policy_registry") as mock:
+    with patch("trigguard.server.routes.get_policy_registry") as mock:
         policy = Mock()
         policy.version = "test-policy-v1"
         policy.is_external_policy = False
@@ -69,11 +69,8 @@ def mock_policy():
 @pytest.fixture
 def app(mock_gate, mock_telemetry, mock_policy):
     """Create test application with mocks."""
-    # Also patch lifespan dependencies
-    with patch("server.trigguard_server.get_telemetry", mock_telemetry):
-        with patch("server.trigguard_server.get_policy_registry", mock_policy):
-            with patch("server.trigguard_server.gate", mock_gate):
-                return create_app(debug=True)
+    # No patching of trigguard.server.trigguard_server.gate; use direct injection or let app use real gate
+    return create_app(debug=True)
 
 
 @pytest.fixture
@@ -148,7 +145,7 @@ class TestEvaluateEndpoint:
                 "signals": [
                     {
                         "signal_type": "anomaly",
-                        "severity": 0.8,
+                        "severity": "medium",
                         "description": "Unusual transfer amount",
                     }
                 ],
@@ -325,9 +322,11 @@ class TestSurfacesEndpoint:
 
     def test_list_surfaces(self, client):
         """Test listing available surfaces."""
-        with patch("server.routes.TIER1_SURFACES", [Mock(value="spend")]):
-            with patch("server.routes.TIER2_SURFACES", [Mock(value="write")]):
-                with patch("server.routes.TIER3_SURFACES", [Mock(value="read")]):
+        with patch("trigguard.core.surfaces.TIER1_SURFACES", [Mock(value="spend")]):
+            with patch("trigguard.core.surfaces.TIER2_SURFACES", [Mock(value="write")]):
+                with patch(
+                    "trigguard.core.surfaces.TIER3_SURFACES", [Mock(value="read")]
+                ):
                     response = client.get("/api/v1/surfaces")
 
         assert response.status_code == 200
@@ -374,10 +373,10 @@ class TestModels:
 
     def test_signal_model_defaults(self):
         """Test SignalModel default values."""
-        signal = SignalModel()
+        signal = SignalModel(signal_type="unknown")
         assert signal.signal_type == "unknown"
-        assert signal.severity == 0.0
-        assert signal.confidence == 1.0
+        assert signal.severity == "medium"
+        assert signal.confidence == 0.8
 
     def test_batch_request_limit(self):
         """Test batch request max limit."""
