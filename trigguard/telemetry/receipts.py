@@ -35,6 +35,8 @@ import json
 import uuid
 import logging
 
+from trigguard._version import __version__
+
 logger = logging.getLogger(__name__)
 
 
@@ -79,6 +81,10 @@ class DecisionReceipt:
     # Risk
     risk_tier: Optional[str] = None
 
+    # Attestation (Surface Attestation Protocol)
+    surface_hash: Optional[str] = None  # Code fingerprint: sha256:...
+    runtime_version: str = __version__  # TrigGuard runtime version
+
     # Metadata
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -99,6 +105,8 @@ class DecisionReceipt:
             "decision": self.decision.value,
             "timestamp": self.timestamp.isoformat(),
             "grant_id": self.grant_id,
+            "surface_hash": self.surface_hash,
+            "runtime_version": self.runtime_version,
         }
         serialized = json.dumps(content, sort_keys=True)
         return hashlib.sha256(serialized.encode()).hexdigest()
@@ -127,6 +135,8 @@ class DecisionReceipt:
             "timestamp": self.timestamp.isoformat(),
             "decision_time_ms": self.decision_time_ms,
             "risk_tier": self.risk_tier,
+            "surface_hash": self.surface_hash,
+            "runtime_version": self.runtime_version,
             "metadata": self.metadata,
             "integrity_hash": self.integrity_hash,
         }
@@ -154,6 +164,8 @@ class DecisionReceipt:
             timestamp=timestamp,
             decision_time_ms=data.get("decision_time_ms", 0.0),
             risk_tier=data.get("risk_tier"),
+            surface_hash=data.get("surface_hash"),
+            runtime_version=data.get("runtime_version", __version__),
             metadata=data.get("metadata", {}),
         )
 

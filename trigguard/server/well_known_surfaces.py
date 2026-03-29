@@ -50,6 +50,7 @@ from trigguard.discovery.discovery_contract import (
     SurfaceDiscoveryRecord,
     ConstraintSchema,
 )
+from trigguard.attestation import AttestationRegistry
 
 # Router for well-known surface endpoints
 surface_router = APIRouter(tags=["well-known", "surfaces"])
@@ -142,10 +143,15 @@ async def get_trigguard_surfaces():
         }
     """
     registry = get_global_surface_registry()
+    attestation_registry = AttestationRegistry.get_global()
 
     # Build response
     surfaces = []
     for surface_def in sorted(registry.list_all(), key=lambda s: s.surface_id):
+        # Get attestation hash if available
+        attestation = attestation_registry.get(surface_def.surface_id)
+        code_hash = attestation.code_hash if attestation else None
+
         surfaces.append(
             {
                 "surface_id": surface_def.surface_id,
@@ -157,6 +163,7 @@ async def get_trigguard_surfaces():
                 "tags": surface_def.tags,
                 "requires_grant": surface_def.requires_grant,
                 "version": surface_def.version,
+                "code_hash": code_hash,
             }
         )
 
