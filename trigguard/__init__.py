@@ -52,8 +52,7 @@ from trigguard.sdk.agent_integrations import (
     protect_tools,
     protect_tool,
 )
-
-__version__ = "0.2.0"
+from trigguard._version import __version__
 
 __all__ = [
     # Primary API
