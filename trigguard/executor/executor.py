@@ -6,7 +6,8 @@ Runtime enforcement layer that:
 2. Checks expiry
 3. Validates scope matches
 4. Enforces constraints
-5. Only then executes the action
+5. Verifies surface attestation
+6. Only then executes the action
 
 This is the execution boundary - the point where authorization
 becomes real-world action.
@@ -33,6 +34,10 @@ from trigguard.grants.errors import (
     GrantScopeMismatchError,
     GrantConstraintViolationError,
     GrantVerificationError,
+)
+from trigguard.attestation.verifier import (
+    SurfaceAttestationVerifier,
+    AttestationVerificationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -112,6 +117,8 @@ class TrigGuardExecutor:
         *,
         strict_mode: bool = True,
         log_executions: bool = True,
+        verify_attestation: bool = False,
+        require_attestation: bool = False,
     ):
         """
         Initialize executor with a grant verifier.
@@ -120,9 +127,21 @@ class TrigGuardExecutor:
             verifier: ActionGrantVerifier with trusted public key
             strict_mode: If True, any verification failure raises immediately
             log_executions: If True, log all execution attempts
+            verify_attestation: If True, verify surface attestation before execution
+            require_attestation: If True, surfaces must have attestation records
         """
         self.verifier = verifier
         self.strict_mode = strict_mode
+        self.log_executions = log_executions
+        self.verify_attestation = verify_attestation
+        self._attestation_verifier = (
+            SurfaceAttestationVerifier(
+                strict=strict_mode,
+                require_attestation=require_attestation,
+            )
+            if verify_attestation
+            else None
+        )
         self.log_executions = log_executions
 
     def execute(
@@ -197,6 +216,35 @@ class TrigGuardExecutor:
                 executed_at=executed_at,
                 verification_checks=verification_checks,
             )
+
+        # Verify surface attestation if enabled
+        if self._attestation_verifier:
+            try:
+                expected_hash = getattr(grant, "surface_hash", None)
+                attestation_result = self._attestation_verifier.verify(
+                    surface_id=surface,
+                    expected_hash=expected_hash,
+                )
+                verification_checks["attestation_verified"] = attestation_result.valid
+                if not attestation_result.valid:
+                    error = ExecutionDeniedError(
+                        f"Attestation verification failed: {attestation_result.reason}",
+                    )
+                    if self.strict_mode:
+                        raise error
+                    return ExecutionResult(
+                        success=False,
+                        result=None,
+                        error=error,
+                        grant_id=grant_id,
+                        executed_at=executed_at,
+                        verification_checks=verification_checks,
+                    )
+            except AttestationVerificationError as e:
+                verification_checks["attestation_verified"] = False
+                if self.log_executions:
+                    logger.warning(f"Attestation verification failed: {e}")
+                raise ExecutionDeniedError(str(e))
 
         # Grant is valid - execute the action
         try:

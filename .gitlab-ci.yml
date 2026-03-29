@@ -1,11 +1,12 @@
 # TrigGuard Kernel CI Pipeline
-# Enforces: lint, tests, kernel boundary, security scan, package build
+# Enforces: lint, tests, kernel boundary, security scan, package build, docker
 
 stages:
   - lint
   - test
   - security
   - build
+  - docker
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -122,3 +123,41 @@ semgrep-sast:
 
 gemnasium-python-dependency_scanning:
   before_script: []
+
+# ============================================================================
+# DOCKER STAGE
+# ============================================================================
+
+docker:build:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script: []
+  script:
+    - docker build -t trigguard-runtime:$CI_COMMIT_SHA .
+    - docker run --rm trigguard-runtime:$CI_COMMIT_SHA python -c "import trigguard; print(f'TrigGuard {trigguard.__version__}')"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+
+docker:push:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script: []
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - docker:build
