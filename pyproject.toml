@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trigguard"
-version = "0.1.0"
+version = "0.2.0"
 description = "Execution authorization infrastructure for AI agents"
 authors = [{name = "TrigGuard", email = "team@trigguard.ai"}]
 readme = "README.md"
@@ -28,6 +28,7 @@ dependencies = [
     "fastapi>=0.100.0",
     "pydantic>=2.0.0",
     "uvicorn>=0.22.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -43,7 +44,9 @@ server = [
 ]
 
 [project.scripts]
+trigguard = "trigguard.cli.main:main"
 trigguard-server = "trigguard.server.trigguard_server:main"
+trigguard-runtime = "trigguard.runtime.server:main"
 trigguard-audit = "trigguard.tools.audit_cli:main"
 
 [project.urls]

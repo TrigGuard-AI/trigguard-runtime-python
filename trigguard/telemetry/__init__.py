@@ -1,12 +1,13 @@
 """
 TrigGuard Telemetry
 
-Infrastructure metrics tracking.
+Infrastructure metrics tracking and decision receipts.
 
 The Core Metric:
     gates_evaluated_total - Execution gates evaluated
 
-This is how TrigGuard proves it's infrastructure.
+Decision Receipts:
+    Auditable records of every authorization decision.
 
 Usage:
     from telemetry import get_telemetry
@@ -16,6 +17,11 @@ Usage:
 
     # Export all metrics
     metrics = telemetry.export()
+
+    # Query decision receipts
+    from trigguard.telemetry import ReceiptStore
+    store = ReceiptStore.get_default()
+    receipts = store.query(surface="trigguard.spend.*")
 """
 
 from trigguard.telemetry.metrics import (
@@ -28,8 +34,16 @@ from trigguard.telemetry.metrics import (
     DecisionTimer,
     MetricPoint,
 )
+from trigguard.telemetry.receipts import (
+    DecisionReceipt,
+    DecisionOutcome,
+    ReceiptStore,
+    ReceiptQuery,
+    create_receipt,
+)
 
 __all__ = [
+    # Metrics
     "TrigGuardTelemetry",
     "get_telemetry",
     "reset_telemetry",
@@ -38,4 +52,10 @@ __all__ = [
     "Histogram",
     "DecisionTimer",
     "MetricPoint",
+    # Receipts
+    "DecisionReceipt",
+    "DecisionOutcome",
+    "ReceiptStore",
+    "ReceiptQuery",
+    "create_receipt",
 ]

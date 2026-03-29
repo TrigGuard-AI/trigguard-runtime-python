@@ -48,8 +48,12 @@ from trigguard.registry.surface_types import (
     SurfaceRiskTier,
     ExecutionSurfaceDefinition,
 )
+from trigguard.sdk.agent_integrations import (
+    protect_tools,
+    protect_tool,
+)
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     # Primary API
@@ -58,6 +62,9 @@ __all__ = [
     # Grant decorator (simplest integration)
     "requires_grant",
     "requires_grant_async",
+    # Agent integrations (protect all tools at once)
+    "protect_tools",
+    "protect_tool",
     # Execution Adapter
     "ExecutionAdapter",
     "execute_if_permitted",
