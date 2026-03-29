@@ -1,3 +1,7 @@
+from trigguard.proof.execution_gate_proof import build_execution_gate_proof
+from trigguard.proof.http import build_proof_headers
+from trigguard.proof.verifier import ExecutionGateProofVerifier
+
 """
 TrigGuard Runtime Server
 
@@ -73,6 +77,9 @@ class RuntimeConfig:
     max_request_size: int = 1_000_000  # 1MB
     request_timeout: float = 30.0
 
+    emit_proof_headers: bool = True
+    emit_proof_body: bool = False
+
 
 class TrigGuardRuntime:
     """
@@ -117,10 +124,25 @@ class TrigGuardRuntime:
             redoc_url="/redoc",
         )
 
+        from fastapi.responses import JSONResponse
+
         @app.post("/execute", response_model=ExecuteResponse)
-        async def execute(request: ExecuteRequest) -> ExecuteResponse:
+        async def execute(request: ExecuteRequest):
             """Execute an action with grant verification."""
-            return await self._handle_execute(request)
+            result, proof, proof_headers = await self._handle_execute_with_proof(
+                request
+            )
+            if self.config.emit_proof_headers and proof_headers:
+                response = JSONResponse(result.dict())
+                for k, v in proof_headers.items():
+                    response.headers[k] = v
+                if self.config.emit_proof_body and proof:
+                    response.headers["Content-Type"] = "application/json"
+                    response.body = response.render(
+                        {**result.dict(), "proof": proof.to_dict()}
+                    )
+                return response
+            return result
 
         @app.get("/health", response_model=HealthResponse)
         async def health() -> HealthResponse:
@@ -155,48 +177,46 @@ class TrigGuardRuntime:
 
         return app
 
-    async def _handle_execute(self, request: ExecuteRequest) -> ExecuteResponse:
-        """Handle execution request."""
+    async def _handle_execute_with_proof(self, request: ExecuteRequest):
+        """Handle execution request and emit proof if permitted."""
         self._request_count += 1
         request_id = request.request_id or str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
-
+        proof = None
+        proof_headers = None
         try:
             # Verify the grant
             verification_result = self.verifier.verify(request.grant_token)
-
             if not verification_result.valid:
                 self._decision_counts["DENY"] += 1
-                return ExecuteResponse(
+                result = ExecuteResponse(
                     request_id=request_id,
                     decision="DENY",
                     surface_id=request.surface_id,
                     timestamp=timestamp,
                     reason=verification_result.reason or "Grant verification failed",
                 )
-
+                return result, None, None
             # Check surface exists
             if not self.registry.exists(request.surface_id):
                 self._decision_counts["DENY"] += 1
-                return ExecuteResponse(
+                result = ExecuteResponse(
                     request_id=request_id,
                     decision="DENY",
                     surface_id=request.surface_id,
                     timestamp=timestamp,
                     reason=f"Unknown surface: {request.surface_id}",
                 )
-
+                return result, None, None
             # Execute through executor boundary
             decision = self.executor.execute(
                 grant=verification_result.grant,
                 surface_id=request.surface_id,
                 context=request.context,
             )
-
             decision_str = decision.decision_type.name
             self._decision_counts[decision_str] += 1
-
-            return ExecuteResponse(
+            result = ExecuteResponse(
                 request_id=request_id,
                 decision=decision_str,
                 surface_id=request.surface_id,
@@ -211,17 +231,32 @@ class TrigGuardRuntime:
                     ),
                 },
             )
+            # Only emit proof for PERMIT
+            if self.config.emit_proof_headers and decision_str == "PERMIT":
+                # Build proof (dummy signer for now)
+                class DummySigner:
+                    def sign(self, data):
+                        return "deadbeef"
 
+                proof = build_execution_gate_proof(
+                    decision_receipt=decision,
+                    runtime_version="0.2.0",
+                    signer=DummySigner(),
+                    surface_id=request.surface_id,
+                )
+                proof_headers = build_proof_headers(proof)
+            return result, proof, proof_headers
         except Exception as e:
             logger.exception(f"Execution error: {e}")
             self._decision_counts["DENY"] += 1
-            return ExecuteResponse(
+            result = ExecuteResponse(
                 request_id=request_id,
                 decision="DENY",
                 surface_id=request.surface_id,
                 timestamp=timestamp,
                 reason=f"Internal error: {type(e).__name__}",
             )
+            return result, None, None
 
     def _get_health(self) -> HealthResponse:
         """Get health status."""

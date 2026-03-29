@@ -58,6 +58,11 @@ __all__ = [
     # Primary API
     "gate",
     "guard",
+    # Proof APIs
+    "ExecutionGateProof",
+    "build_execution_gate_proof",
+    "ExecutionGateProofVerifier",
+    "build_proof_headers",
     # Grant decorator (simplest integration)
     "requires_grant",
     "requires_grant_async",

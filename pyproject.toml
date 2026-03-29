@@ -29,6 +29,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "uvicorn>=0.22.0",
     "click>=8.0.0",
+    "httpx>=0.24.0",
 ]
 
 [project.optional-dependencies]
@@ -39,9 +40,7 @@ dev = [
     "mypy>=1.0.0",
     "bandit>=1.7.0",
 ]
-server = [
-    "httpx>=0.24.0",
-]
+server = []
 
 [project.scripts]
 trigguard = "trigguard.cli.main:main"
