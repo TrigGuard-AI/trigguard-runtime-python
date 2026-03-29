@@ -1,0 +1,15 @@
+{
+  "name": "deny_unknown_surface",
+  "description": "Unknown surface should be denied",
+  "surface": "unknown.fake.surface",
+  "grant": {
+    "issuer": "test-authority",
+    "subject": "agent:test",
+    "action": "fake",
+    "resource": "fake",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "key_id": "test-key-001"
+  },
+  "key_status": "ACTIVE",
+  "expected_decision": "DENY"
+}

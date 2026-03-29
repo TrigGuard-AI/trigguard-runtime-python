@@ -1,0 +1,15 @@
+{
+  "name": "deny_expired_key",
+  "description": "Grant signed with expired key should be denied",
+  "surface": "trigguard.code.exec",
+  "grant": {
+    "issuer": "expired-authority",
+    "subject": "agent:test",
+    "action": "execute",
+    "resource": "code",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "key_id": "expired-key-001"
+  },
+  "key_status": "EXPIRED",
+  "expected_decision": "DENY"
+}
