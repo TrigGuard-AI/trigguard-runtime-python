@@ -1,0 +1,8 @@
+{
+  "name": "deny_no_grant",
+  "description": "No grant provided should be denied",
+  "surface": "trigguard.data.export",
+  "grant": null,
+  "key_status": null,
+  "expected_decision": "DENY"
+}

@@ -22,7 +22,7 @@ from trigguard.protocol.decision_contracts import Decision
 from trigguard.grants import ActionGrant
 from trigguard.verification import TrigGuardVerifierSDK
 from trigguard.executor import TrigGuardExecutor
-from trigguard.registry import ExecutionSurfaceRegistry
+from trigguard.registry import ExecutionSurfaceRegistry, get_global_surface_registry
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class TrigGuardRuntime:
         self.config = config or RuntimeConfig()
         self.verifier = verifier or TrigGuardVerifierSDK()
         self.executor = executor or TrigGuardExecutor(self.verifier)
-        self.registry = registry or ExecutionSurfaceRegistry.get_default()
+        self.registry = registry or get_global_surface_registry()
 
         self._start_time = datetime.now(timezone.utc)
         self._request_count = 0

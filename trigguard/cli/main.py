@@ -16,6 +16,7 @@ from typing import Optional
 import click
 
 from trigguard import __version__
+from trigguard.registry import get_global_surface_registry, SurfaceRiskTier
 
 
 @click.group()
@@ -41,26 +42,21 @@ def surfaces():
 @click.option("--risk-tier", "-r", type=str, help="Filter by risk tier")
 def surfaces_list(format: str, risk_tier: Optional[str]):
     """List all registered execution surfaces."""
-    from trigguard.registry import ExecutionSurfaceRegistry, SurfaceRiskTier
-
-    registry = ExecutionSurfaceRegistry.get_default()
+    registry = get_global_surface_registry()
     all_surfaces = registry.list_all()
 
     # Filter by risk tier if specified
     if risk_tier:
         try:
             tier = SurfaceRiskTier[risk_tier.upper()]
-            all_surfaces = [
-                s for s in all_surfaces if registry.get(s).risk_tier == tier
-            ]
+            all_surfaces = [s for s in all_surfaces if s.risk_tier == tier]
         except KeyError:
             click.echo(f"Unknown risk tier: {risk_tier}", err=True)
             sys.exit(1)
 
     if format == "json":
         output = []
-        for surface_id in all_surfaces:
-            surface = registry.get(surface_id)
+        for surface in all_surfaces:
             output.append(
                 {
                     "id": surface.surface_id,
@@ -73,10 +69,9 @@ def surfaces_list(format: str, risk_tier: Optional[str]):
         # Table format
         click.echo(f"{'Surface ID':<40} {'Risk Tier':<15} {'Description'}")
         click.echo("-" * 80)
-        for surface_id in sorted(all_surfaces):
-            surface = registry.get(surface_id)
+        for surface in sorted(all_surfaces, key=lambda s: s.surface_id):
             desc = (surface.description or "")[:30]
-            click.echo(f"{surface_id:<40} {surface.risk_tier.name:<15} {desc}")
+            click.echo(f"{surface.surface_id:<40} {surface.risk_tier.name:<15} {desc}")
 
     click.echo(f"\nTotal: {len(all_surfaces)} surfaces")
 
@@ -85,9 +80,7 @@ def surfaces_list(format: str, risk_tier: Optional[str]):
 @click.argument("surface_id")
 def surfaces_info(surface_id: str):
     """Show detailed information about a surface."""
-    from trigguard.registry import ExecutionSurfaceRegistry
-
-    registry = ExecutionSurfaceRegistry.get_default()
+    registry = get_global_surface_registry()
 
     # Resolve aliases
     resolved = registry.resolve_alias(surface_id)
@@ -103,7 +96,9 @@ def surfaces_info(surface_id: str):
     click.echo(f"Surface ID:    {surface.surface_id}")
     click.echo(f"Risk Tier:     {surface.risk_tier.name}")
     click.echo(f"Description:   {surface.description or 'N/A'}")
-    click.echo(f"Aliases:       {', '.join(registry.get_aliases(resolved)) or 'None'}")
+    # Find aliases that resolve to this surface
+    aliases = [a for a, s in getattr(registry, "_aliases", {}).items() if s == resolved]
+    click.echo(f"Aliases:       {', '.join(aliases) or 'None'}")
     if surface_id != resolved:
         click.echo(f"Resolved from: {surface_id}")
 
@@ -111,10 +106,9 @@ def surfaces_info(surface_id: str):
 @surfaces.command("aliases")
 def surfaces_aliases():
     """List all surface aliases."""
-    from trigguard.registry import ExecutionSurfaceRegistry
-
-    registry = ExecutionSurfaceRegistry.get_default()
-    aliases = registry.list_aliases()
+    registry = get_global_surface_registry()
+    # Access internal aliases dict
+    aliases = getattr(registry, "_aliases", {})
 
     click.echo(f"{'Alias':<40} {'Resolves To'}")
     click.echo("-" * 80)
@@ -272,15 +266,12 @@ def keys_list(format: str):
 @cli.command()
 def info():
     """Show TrigGuard runtime information."""
-    from trigguard.registry import ExecutionSurfaceRegistry
-
-    registry = ExecutionSurfaceRegistry.get_default()
+    registry = get_global_surface_registry()
 
     click.echo("TrigGuard Kernel")
     click.echo(f"  Version:            {__version__}")
     click.echo(f"  Protocol Version:   1.0")
     click.echo(f"  Surfaces:           {len(registry.list_all())}")
-    click.echo(f"  Aliases:            {len(registry.list_aliases())}")
     click.echo()
     click.echo("Endpoints:")
     click.echo("  /.well-known/trigguard-surfaces")

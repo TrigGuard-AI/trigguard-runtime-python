@@ -1,0 +1,15 @@
+{
+  "name": "deny_expired_grant",
+  "description": "Expired grant should be denied",
+  "surface": "trigguard.spend.transfer",
+  "grant": {
+    "issuer": "test-authority",
+    "subject": "agent:test",
+    "action": "transfer",
+    "resource": "wallet",
+    "expires_at": "2000-01-01T00:00:00Z",
+    "key_id": "test-key-001"
+  },
+  "key_status": "ACTIVE",
+  "expected_decision": "DENY"
+}
