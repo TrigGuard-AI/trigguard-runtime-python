@@ -19,6 +19,11 @@ Usage:
 
     # Auto-detect surface from function signature
     protected = protect_tool(transfer_funds)  # -> trigguard.spend.transfer
+
+    # Scan agent to see what would be protected
+    from trigguard.sdk.discovery import scan_agent, scan_and_report
+    result = scan_agent(agent)
+    print(scan_and_report(agent))
 """
 
 from dataclasses import dataclass, field
@@ -30,57 +35,11 @@ import re
 
 from trigguard.sdk.decorators import requires_grant
 from trigguard.registry import ExecutionSurfaceRegistry
+from trigguard.sdk.discovery.agent_scan import discover_tools, infer_surface, scan_agent
 
 logger = logging.getLogger(__name__)
 
 F = TypeVar("F", bound=Callable[..., Any])
-
-
-# Surface inference patterns
-SURFACE_PATTERNS: Dict[str, str] = {
-    # Spend patterns
-    r"(transfer|send|pay|charge|withdraw|purchase)": "trigguard.spend.transfer",
-    r"(refund|credit)": "trigguard.spend.refund",
-    r"(subscribe|recurring)": "trigguard.spend.subscription",
-    # Data patterns
-    r"(export|download|extract|dump)": "trigguard.data.export",
-    r"(delete|remove|drop|truncate|purge)": "trigguard.data.delete",
-    r"(write|update|modify|change|set)": "trigguard.data.write",
-    # Code patterns
-    r"(exec|execute|run|eval).*(code|script|command|shell)": "trigguard.code.exec",
-    r"(install|pip|npm|package)": "trigguard.code.install_package",
-    # Network patterns
-    r"(http|request|fetch|api|curl)": "trigguard.network.http_request",
-    r"(email|mail|send.*message)": "trigguard.comms.email",
-    # System patterns
-    r"(file|read|open)": "trigguard.system.file_read",
-    r"(process|spawn|fork|subprocess)": "trigguard.system.process_spawn",
-    # Identity patterns
-    r"(login|auth|authenticate|signin)": "trigguard.identity.authenticate",
-    r"(impersonate|sudo|assume)": "trigguard.identity.impersonate",
-    r"(invite|add.*user|create.*account)": "trigguard.identity.invite",
-}
-
-
-def infer_surface(func: Callable[..., Any]) -> Optional[str]:
-    """
-    Infer the execution surface from function name and signature.
-
-    Args:
-        func: The function to analyze
-
-    Returns:
-        Inferred surface ID or None if cannot determine
-    """
-    name = func.__name__.lower()
-    doc = (func.__doc__ or "").lower()
-    combined = f"{name} {doc}"
-
-    for pattern, surface in SURFACE_PATTERNS.items():
-        if re.search(pattern, combined):
-            return surface
-
-    return None
 
 
 def protect_tool(

@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  trigguard-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trigguard-runtime
+    ports:
+      - "8080:8080"
+    environment:
+      - TRIGGUARD_LOG_LEVEL=INFO
+      - TRIGGUARD_STRICT_MODE=true
+      - TRIGGUARD_VERIFY_ATTESTATION=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config:ro
+    networks:
+      - trigguard-net
+
+  # Redis for rate limiting (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: trigguard-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - trigguard-net
+
+networks:
+  trigguard-net:
+    driver: bridge
+
+# Production deployment compose
+# Use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up

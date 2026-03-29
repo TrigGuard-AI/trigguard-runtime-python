@@ -48,6 +48,13 @@ from trigguard.attestation.attestation import (
     attest_surface,
     get_surface_attestation,
 )
+from trigguard.attestation.verifier import (
+    SurfaceAttestationVerifier,
+    AttestationVerificationError,
+    SurfaceNotAttestedError,
+    HashMismatchError,
+    VerificationResult,
+)
 
 __all__ = [
     # Hash computation
@@ -64,4 +71,10 @@ __all__ = [
     "get_runtime_attestation",
     "attest_surface",
     "get_surface_attestation",
+    # Verifier
+    "SurfaceAttestationVerifier",
+    "AttestationVerificationError",
+    "SurfaceNotAttestedError",
+    "HashMismatchError",
+    "VerificationResult",
 ]

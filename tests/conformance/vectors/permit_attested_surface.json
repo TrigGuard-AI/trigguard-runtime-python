@@ -1,0 +1,16 @@
+{
+  "name": "permit_attested_surface",
+  "description": "Grant with surface attestation metadata should be permitted (attestation verification tested separately)",
+  "surface": "trigguard.spend.transfer",
+  "grant": {
+    "issuer": "test-authority",
+    "subject": "agent:test",
+    "action": "transfer",
+    "resource": "wallet",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "key_id": "test-key-001",
+    "surface_hash": "sha256:matching_hash"
+  },
+  "key_status": "ACTIVE",
+  "expected_decision": "PERMIT"
+}
