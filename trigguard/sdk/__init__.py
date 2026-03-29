@@ -70,6 +70,14 @@ from trigguard.sdk.decorators import (
     get_protected_surface,
     get_protected_action,
 )
+from trigguard.sdk.agent_integrations import (
+    protect_tools,
+    protect_tool,
+    infer_surface,
+    protect_langchain_tools,
+    protect_openai_functions,
+    ProtectionResult,
+)
 
 __all__ = [
     # Primary API
@@ -78,6 +86,13 @@ __all__ = [
     # Grant decorator
     "requires_grant",
     "requires_grant_async",
+    # Agent integrations
+    "protect_tools",
+    "protect_tool",
+    "infer_surface",
+    "protect_langchain_tools",
+    "protect_openai_functions",
+    "ProtectionResult",
     # Classes
     "TrigGuardGate",
     "GateResult",
