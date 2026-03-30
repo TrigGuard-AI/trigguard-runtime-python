@@ -18,7 +18,22 @@ Some clones may still use:
 
 - `https://gitlab.com/TrigGuardAI/trigguard-kernel.git`
 
-That remote is **legacy**. New work should **clone from GitHub** and push to GitHub; keep GitLab only if you need a mirror for CI/CD until you migrate pipelines.
+That remote is **legacy**. **GitHub is the only canonical** public home for this codebase.
+
+### Option A (recommended): archive or retire the GitLab project
+
+Mark the GitLab project **archived** (read-only) and rely on the README banner (and this doc) so GitLab is never mistaken for a second source of truth.
+
+### Option B: read-only mirror from GitHub
+
+If you need GitLab for internal CI or compliance, configure **pull mirroring** in GitLab (**Settings → Repository → Mirroring repositories**) so **GitHub → GitLab** is automatic. Do **not** merge competing changes on GitLab `main`; treat GitLab as a passive mirror.
+
+### What not to do
+
+- Do **not** unprotect GitLab `main` just to “sync faster” — that weakens governance.
+- Do **not** describe GitLab as equally canonical in docs or onboarding.
+
+New work should **clone from GitHub** and open issues/PRs there.
 
 ## Rename (optional)
 
