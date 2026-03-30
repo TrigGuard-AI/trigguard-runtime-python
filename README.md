@@ -1,4 +1,13 @@
-# TrigGuard
+# TrigGuard (Python runtime)
+
+**Canonical repository (GitHub):**  
+**[github.com/TrigGuard-AI/trigguard-runtime-python](https://github.com/TrigGuard-AI/trigguard-runtime-python)
+
+This repository is the **Python runtime** for the TrigGuard protocol (gates, policy evaluation, HTTP services). **Normative protocol semantics** live in [`trigguard-protocol`](https://github.com/TrigGuard-AI/trigguard-protocol) only. The **reference** runtime implementation is the [`TrigGuard`](https://github.com/TrigGuard-AI/TrigGuard) monorepo — this Python package is an **alternate** runtime implementation.
+
+See [`docs/CANONICAL_REPOSITORY.md`](docs/CANONICAL_REPOSITORY.md) for GitLab legacy remote and naming notes.
+
+---
 
 **TrigGuard is an execution authorization layer for AI agents.**
 
