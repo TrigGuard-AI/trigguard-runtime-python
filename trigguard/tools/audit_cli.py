@@ -370,13 +370,11 @@ def _generate_explanation(receipt: DecisionReceipt) -> list:
             lines.append("")
             lines.append("This is a fail-closed safety measure.")
 
-        # Check for tier 1 critical signals
-        elif receipt.surface.value.lower() in [
-            "spend",
-            "data_export",
-            "code_exec",
-            "delegation",
-        ]:
+        # Check for tier 1 critical signals.
+        # The set is derived from the enum's `is_irreversible` property to
+        # avoid the post-ingress-normalization-leak documented in
+        # SURFACE_RUNTIME_MIGRATION_PLAN.md §12.6.
+        elif receipt.surface.is_irreversible:
             critical_count = sum(
                 1 for s in receipt.signals if s.severity == SignalSeverity.CRITICAL
             )
