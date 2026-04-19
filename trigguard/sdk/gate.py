@@ -86,12 +86,38 @@ class GateResult:
         return self.permit
 
 
-# Surface aliases for SDK convenience
+# Surface aliases accepted at ingress.
+#
+# The map below is the *single ingress-normalization layer* required by
+# trigguard-authority docs/governance/SURFACE_RUNTIME_MIGRATION_PLAN.md §12.
+# Legacy surface names (and authority-side dot-namespaced canonical names)
+# are accepted at this boundary and resolved to the kernel's canonical
+# `ExecutionSurface` value. After this layer no legacy name propagates
+# downstream — receipts, logs, metrics, traces, and caches MUST contain
+# only the canonical enum value.
+#
+# Three groups:
+#   1. Convenience SDK aliases (kernel-internal short names).
+#   2. Legacy snake_case execution-surface names from
+#      trigguard-authority's migration table (§9h). Mapping rationale per
+#      entry below.
+#   3. Authority-side dot-namespaced canonical names. The authority advertises
+#      `data.export`, `tool.invoke`, `identity.assert`, `authority.delegate`,
+#      etc. The kernel accepts those at ingress and resolves them to the
+#      kernel's enum value, which is what downstream code uses.
 SURFACE_ALIASES = {
     "code_exec": "code_execution",
-    "data_export": "export",
     "cli": "tool_invocation",
     "api": "external_api",
+    "data_export": "export",
+    "spend_commit": "spend",
+    "time_commit": "data_mutation",
+    "social_commit": "unknown",
+    "identity_assertion": "identity",
+    "data.export": "export",
+    "tool.invoke": "tool_invocation",
+    "identity.assert": "identity",
+    "authority.delegate": "delegation",
 }
 
 
@@ -335,20 +361,21 @@ class TrigGuardGate:
             signal_count=len(frame.signals),
         )
 
-        # Track global telemetry (THE infrastructure metric)
-        tier1_surfaces = {
-            "spend",
-            "data_export",
-            "code_exec",
-            "delegation",
-            "identity_assertion",
-        }
+        # Track global telemetry (THE infrastructure metric).
+        #
+        # `is_irreversible` is sourced from the enum, not a hardcoded set.
+        # An earlier hardcoded set leaked legacy surface names
+        # (`data_export`, `code_exec`, `identity_assertion`) that never
+        # match the post-ingress-normalization canonical values
+        # (`export`, `code_execution`, `identity`); the comparison
+        # silently never fired. Anti-pattern documented in
+        # SURFACE_RUNTIME_MIGRATION_PLAN.md §12.6.
         telemetry = get_telemetry()
         telemetry.record_decision(
             surface=request.surface.value,
             decision=receipt.decision.value,
             latency_seconds=latency,
-            is_irreversible=request.surface.value.lower() in tier1_surfaces,
+            is_irreversible=request.surface.is_irreversible,
         )
 
         # Map to SDK decision
@@ -435,12 +462,15 @@ class GateMetrics:
             "silence": 0,
         }
         self._irreversible_blocked = 0
+        # Tier-1 surface set is derived from the enum's `is_irreversible`
+        # property to avoid the post-ingress-normalization-leak bug
+        # documented in SURFACE_RUNTIME_MIGRATION_PLAN.md §12.6 (the
+        # previous hardcoded set used legacy names like `data_export`
+        # and `code_exec` that never matched the canonical post-normalized
+        # values `export` and `code_execution`, so tier-1-blocked counts
+        # never incremented).
         self._tier1_surfaces = {
-            "spend",
-            "data_export",
-            "code_exec",
-            "delegation",
-            "identity_assertion",
+            s.value.lower() for s in ExecutionSurface if s.is_irreversible
         }
 
     def record_decision(
