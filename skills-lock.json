@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "requesting-code-review": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/requesting-code-review/SKILL.md",
+      "computedHash": "cde520e9118d7e6b74b5ab0123cff2f68d9c07bddb3f82c997753b6126600aed"
+    },
+    "spec-driven-development": {
+      "source": "mariano-aguero/spec-driven-development-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "89c38f06cd22ab7fcdbcfb5b5ceef49da2fd7ac7f399486fd4d995a85f545a25"
+    },
+    "verification-before-completion": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/verification-before-completion/SKILL.md",
+      "computedHash": "9b446f0c7fe1cfb560b1d34439523b1a76d5f177290007b2c053a1c749a4a8ba"
+    },
+    "vibe-guard": {
+      "source": "ofershap/vibe-guard",
+      "sourceType": "github",
+      "skillPath": "skills/vibe-guard/SKILL.md",
+      "computedHash": "eb28bf94544c8d82a5dc338c153b07aec52c2dbef969ab221f2611492d386172"
+    }
+  }
+}
