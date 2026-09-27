@@ -1,0 +1,24 @@
+version: 2.1
+
+# This repository had a main ruleset and no pull-request check.
+# The commands match the GitLab pipeline: install, format, pytest.
+jobs:
+  runtime_checks:
+    docker:
+      - image: cimg/python:3.11
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install, check formatting, and test
+          command: |
+            set -euo pipefail
+            python -m pip install --upgrade pip
+            python -m pip install -e ".[dev]"
+            black --check .
+            python -m pytest -q --tb=short
+
+workflows:
+  runtime_checks:
+    jobs:
+      - runtime_checks
